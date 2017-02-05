@@ -8,7 +8,7 @@ This code implements the core of a simple agent with an attention schema.
 
 Here's a diagram of the architecture implemented in this agent:
 
-![architecture of simple attention schema agent](./simple.svg)
+![architecture of simple attention schema agent](simple.svg)
 
 And here's the code:
 
