@@ -16,7 +16,7 @@ notes on those things:
 
 ### Sloman and Chrisley
 
-The most relevant part of this seems to be the explanation of the privacy and ineffability of qualia on page 35; I think that's what you were referring to in your "Furthermore" paragraph.
+The most relevant part of this seems to be the explanation of the privacy and ineffability of qualia on page 35; I think that's what Luke was referring to in his "Furthermore" paragraph.
 
 > Now suppose that an agent A with a meta-management system, as in figure 7, uses a self-organising process to develop concepts for categorising its own internal virtual machine states as sensed by internal monitors. These will be architecture-driven concepts, but need not be architecture-based if the classifica- tion mechanism does not use an implicit or explicit theory of the architecture of the system it is monitoring, but merely develops a way of organising its ‘sensory’ input data. If such a concept C is applied by A to one of its internal states, then the only way C can have meaning for A is in relation to the set of concepts of which it is a member, which in turn derives only from the history of the self-organising process in A. These concepts have what Campbell (1994) refers to as ‘causal indexicality’.
 >
@@ -27,12 +27,11 @@ The most relevant part of this seems to be the explanation of the privacy and in
 
 > The TIH states that the content of these theories includes, so to speak, the following statements:
 >
-> (1) Minds can take up information about states of affairs, and then can use > that information to form beliefs about them: states of affairs appear to minds.
-> (2) The way minds do that is that they are affected in a certain way, they > have certain experiences.
-> (3) The properties of experiences determine what appears to the mind, and a > state of affairs appears to the mind in virtue of these properties of > experiences. For example: an experience of a red circle is an affection of the > mind in virtue of which the presence of a red circle appears to the mind.
-> (4) Take all the cases in which a certain state of affairs A appears > veridically to a subject S, and consider what all these cases have in common > regarding the way in which S is affected. What they have in common is a state > E, which is an experience of A.
-> (5)
-> Something is a part of E if and only if this thing is part of the way in which > S is affected in all the cases in which A appears veridically to a subject S.
+> 1. Minds can take up information about states of affairs, and then can use > that information to form beliefs about them: states of affairs appear to minds.
+> 2. The way minds do that is that they are affected in a certain way, they > have certain experiences.
+> 3. The properties of experiences determine what appears to the mind, and a > state of affairs appears to the mind in virtue of these properties of > experiences. For example: an experience of a red circle is an affection of the > mind in virtue of which the presence of a red circle appears to the mind.
+> 4. Take all the cases in which a certain state of affairs A appears > veridically to a subject S, and consider what all these cases have in common > regarding the way in which S is affected. What they have in common is a state  E, which is an experience of A.
+> 5. Something is a part of E if and only if this thing is part of the way in which > S is affected in all the cases in which A appears veridically to a subject S.
 >
 > Appearances can be fallacious, and a mind can be deceived by the way states of affairs appear. And here is what happens in cases of fallacious appearances: when a subject S has a fallacious appearance of A, S is affected in exactly the same way as in cases of veridical appearances of A, except that A is not the case. That is to say, when a subject S has a fallacious appearance of A, it is in state E (E being, and being nothing but, what is common to the way S is affected in all the cases in which A appears veridically to her), but A is not the case.
 
