@@ -1,5 +1,5 @@
 ---
-layout: post
+layout: page
 title:  "Simple attention schema agent"
 date:   ""
 ---

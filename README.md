@@ -1,3 +1,9 @@
+---
+layout: page
+title:  "Simple attention schema agent"
+date:   ""
+---
+
 # Consciousness
 
 The aim here is to make programs illustrating key features of consciousness.
@@ -14,16 +20,148 @@ Luke wrote:
 
 notes on those things:
 
+### Qualia as gensyms
+
+In section 2.5.2 of Good and Real, Drescher writes:
+
+> In the computer language Lisp, a gensym (short for *generated symbol*) is an object that has no parts of properties, as far as Lisp programs can discern, except for its unique identity--that is, a Lisp program can tell whether or not two variables both have the same gensym as their value (as oppose to two different gensyms, or else other kinds of objects, such as numbers or strings). Arbitrarily complicated structures can refer to gensyms, placing the gensyms in relation to one another (and to other objects). But each gensym is uniquely identifiable even apart from its occurences in any such structures.
+>
+> Similarly, I propose, our basic sensations, such as seeing red, may be represented by distinct gensyms (or at least, by gensyms suitably augmented--to support, for instance, comparisons of brightness or hue, in the case of color-gensyms, in addition to pure discrimination of identity.) A Lisp program cannot examine whatever internal ID tag distinguishes a given gensym from any other; yet the program can tell whether or not something is indeed the same as that gensym. Similarly, we have no introspective access to whatever internal properties make the *red* gensym recognizably different from the *green*; our Cartesian Camcorders are not wired up to monitor or record those details. Thus, we cannot tell what makes the *red* sensation redlike, even though we know the sensation when we experience it. (Gensyms metaphorically capture an idea of qualia emphasized by many authors--e.g., in recent work, the transparency spoken of by Metzinger [2003]; and the homogeneity and nondecomposibility discussed by Clark [2005].)
+>
+> Our color-gensyms become embedded in structures that record our visual experiences, that designate associated color-names that we learn in childhood, that trigger various emotional resonances, and so forth. Such structures elaborate what seeing red means to us; the structures, together with the gensym identity-comparison mechanism, let you ask, for example, if the color of an object you're looking at now (or some color you're imagining now) matches the color of the majestic sunset you saw last night. Still, the gensym for red makes *seeing red* identifiable in and of itself--just like our intuition says--even apart from all the memories and connotations (though you would not, for example, know the *name* for red if not for those memories).
+>
+> And conversely, knowing about red-related cognitive structures and the descriptions they engender--even if that knowledge were implausibly detailed and exhaustive--would not necessarily give someone who lacks prior color-experience the slightest clue whether the card now being shown is of the color called red. But of course, nothing non-mechanical is involved here--on the contrary, gensyms are a routine feature of computer programming languages.
+>
+> Interpersonal comparisons of qualia (is my red your green?) are simply meaningless, just as it is meaningless to ask whether two separate computers are using the same gensym when there is no machienery to perform or define gensym identity comparisons across the separate computers. For if we were then to construct such machinery, we could arbitrarily choose to make the machinery construe a particular gensym on one computer to be the same as some gensym on another computer, or not.
+>
+> Ironically, then, our seemingly uniquely privileged access to our own sensations--the access by which we can percieve, but cannot communicate, just what our respective inner experiences feel like--turns out instead to be a private *limitation*. Unlike an external observer of your neurons, you cannot (introspectively) look inside your gensyms to see what lets you recognize each one; each gensym's only introspectively discernable property is its very recognizability (or in the case of value-laden gensyms, your tendency to pursue or avoid the state in question is also discernable, as discussed above in section 2.4.2). We can easily misconstrue this limiration of our introspective access, mistaking it for an inherent property of what we are accessing. This misconstrual is another false reification; it promotes the illusion that you can have a private sensation that--although distinctly recognizable to you--is inherently featureless (except by reference to itself; that is, the red sensation's only feature is its manifest redness). A truly featureless sensation would not be externally analyzable--unlike physical objects and events, which admit of external, objective, scientific scrutiny. But in reality, a gensym's objectively distinguishing features are merely hidden, not absent.
+
+Here are the features of an agent which this theory would explain:
+
+- When you are asked to describe what seeing red is like, you can't give any good answers.
+    - **How this could be different:** If "what something was like" just meant "what neurons are firing in my brain" and you had access to what neurons are firing in your brain, you would be able to explain everything about what seeing red is like.
+- When you have not seen red before, even if you are allowed to learn as much as you want about redness before you actually see a red thing, you will never be able to successfully imagine what the experience will be like such that when you actually see red you will say that the experience is similar to the experience you had imagined.
+    - So for this to make sense agents need to be able to 1) compare their different qualia and 2) generate new qualia in their minds, which can then be compared.
+    - **How this could be different:**
+        - Agents have qualia which are constructed with various information, and the constructor for qualia is such that it can be called by the planning module of the brain. Maybe in the case of not having had an experience before, we'd expect that the experience would feel the way that we expected it to feel. This would happen if the qualia factory method is called the first time when the agent imagines a particular thing happening, and then its result is cached so that every time the agent imagined seeing red, it would always imagine the same qualia, and then when it actually sees red, the qualia will be as it expected. (Alternatively, maybe the agent will expect the qualia to be one particular way, but the agent will be wrong.)
+
+One question I have is whether the qualia of redness is something linked to from the concept of redness, or whether the qualia of redness *is* the concept of redness.
+
+Example transcript explained by gensyms:
+
+> Buck: Have you ever seen red before?
+>
+> Agent: No.
+>
+> Buck: What are you currently seeing?
+>
+> Agent: I'm seeing blue.
+>
+> Buck: What colors have you seen before?
+>
+> Agent: Just blue and green.
+>
+> Buck: Okay, can you imagine what it's like to see red? Red things are things that make the Red channel of your RGB camera have higher values than the Green and Blue channels. Please try to imagine it so that you're imagining an experience as similar as possible to the experience that you actually have when you see red.
+>
+> Agent: Okay, I can imagine myself to be experiencing red. But I can only do that by imagining it conceptually, not by having an understanding of what it would be like the way that I have an understanding of what seeing a spinning green sphere that's one meter around would be like.
+>
+> *Buck shows the agent red.*
+>
+> Agent: Well, yep, that's not what I was expecting. :shrug:
+>
+> Buck: Can you tell me anything about the difference between your predicted experience of red and the real experience of red?
+>
+> Agent: No.
+
+#### How does this look, when implemented?
+
+I need to be able to ask the agent about their experiences. This could be exposed as an API of the agent.
+
+Here's my attempt to write the above conversation in a form that could plausibly be implemented. Ruby is better for this kind of DSL than Python, so that's what I'm doing.
+
+The actual inspiration for this kind of query should probably be some kind of probabilistic programming language or Prolog or something like that.
+
+ruby
+```
+# Have you ever seen red before?
+
+agent.query do |a|
+    red = a.find_concept_by_name("red")
+    a.memories.where { |m| m.concepts.contains? red }.present?
+end # => false
+
+# What are you currently seeing?
+
+agent.query do |a|
+    a.current_experience
+     .sensory_experiences
+     .where { |c| c.modality == :visual }
+     .pluck(:name)
+end # => ["blue", "car", "blue car"] or something
+
+# Which colors have you seen before?
+
+agent.query do |a|
+    color = a.find_concept_by_name("color")
+
+    a.memory
+     .sensory_experiences
+     .where { |e| e.is_a? color }
+     .pluck(:name)
+end # => ["blue", "green"]
+
+# Is the experience of seeing blue the same as the experience of seeing green?
+
+agent.query do |a|
+    blue_quale = a.find_concept_by_name("blue").quale
+    green_quale = a.find_concept_by_name("green").quale
+
+    blue_quale == green_quale
+end # => false
+
+# When you see red, is it going to cause the same quale as seeing blue does?
+
+agent.query do |a|
+    red_quale = # the quale caused by seeing red things
+    blue_quale = a.find_concept_by_name("blue").quale
+
+    red_quale.probability_of_equals(blue_quale)
+end # => small number
+```
+
+Another key point is that the agent can't communicate a description of a quale.
+
+Point of confusion of mine: why does red have a quale and "handbag" doesn't really as much?
+
+#### How do I implement this?
+
+When an experience is had, the agent is able to identify many qualia in it. These qualia have no properties observable to the agent, except that the agent is able to check if they are equal or not.
+
+So Drescher said that our basic sensations might be represented by "distinct gensyms (or at least, by gensyms suitably augmented--to support, for instance, comparisons of brightness or hue, in the case of color-gensyms, in addition to pure discrimination of identity.)"
+
+I think the augmentation bit of this is kind of awkward. Like, I can say that red is more like purple than it's like green. This makes me kind of think that the gensyms account is not a good explanation.
+
+Maybe qualia are reserved for things which can't be broken down into constituent parts?
+
 ### Sloman and Chrisley
 
 The most relevant part of this seems to be the explanation of the privacy and ineffability of qualia on page 35; I think that's what Luke was referring to in his "Furthermore" paragraph.
 
 > Now suppose that an agent A with a meta-management system, as in figure 7, uses a self-organising process to develop concepts for categorising its own internal virtual machine states as sensed by internal monitors. These will be architecture-driven concepts, but need not be architecture-based if the classifica- tion mechanism does not use an implicit or explicit theory of the architecture of the system it is monitoring, but merely develops a way of organising its ‘sensory’ input data. If such a concept C is applied by A to one of its internal states, then the only way C can have meaning for A is in relation to the set of concepts of which it is a member, which in turn derives only from the history of the self-organising process in A. These concepts have what Campbell (1994) refers to as ‘causal indexicality’.
 >
-> This means that if two agents A and B have each developed concepts in this way, then if A uses its concept Ca, to think the thought ‘I am having experience Ca’, and B uses its concept Cb, to think the thought ‘I am having experience Cb’ the two thoughts are intrinsically private and incommunicable, even if A and B actually have exactly the same architecture and have had identical histories lead- ing to the formation of structurally identical sets of concepts. A can wonder: ‘Does B have an experience described by a concept related to B as my concept Ca is related to me?’ But A cannot wonder ‘Does B have experiences of type Ca’, for it makes no sense for the concept Ca to be applied outside the context for which it was developed, namely one in which A’s internal sensors classify internal states. They cannot classify states of B.
+> This means that if two agents A and B have each developed concepts in this way, then if A uses its concept Ca, to think the thought ‘I am having experience Ca’, and B uses its concept Cb, to think the thought ‘I am having experience Cb’ the two thoughts are intrinsically private and incommunicable, even if A and B actually have exactly the same architecture and have had identical histories leading to the formation of structurally identical sets of concepts. A can wonder: ‘Does B have an experience described by a concept related to B as my concept Ca is related to me?’ But A cannot wonder ‘Does B have experiences of type Ca’, for it makes no sense for the concept Ca to be applied outside the context for which it was developed, namely one in which A’s internal sensors classify internal states. They cannot classify states of B.
+>
 > When different agents use architecture-driven concepts, produced by self organising classifiers, to classify internal states of a virtual machine, and are not even partly explicitly defined in relation to some underlying causes (e.g. external objects or a presumed architecture producing the sensed states), then there is nothing to give those concepts any user-independent content, in the way that our colour words have user-independent content because they refer to properties of physical objects in a common environment. Thus self-referential architecture- driven concepts used by different individuals are strictly non-comparable: not only can you not know whether your concepts are the same as mine, the question is *incoherent*. If we use the word ‘qualia’ to refer to the virtual machine states or entities to which these concepts are applied, then asking whether the qualia in two experiencers are the same would then would be analogous to asking whether two spatial locations in different frames of reference are the same, when the frames are moving relative to each other. But it is hard to convince some people that this makes no sense, because the question is grammatically well-formed. Sometimes real nonsense is not *obvious* nonsense.
 
+
+
+#### How do I implement this?
+
+I feel like this hypothesis is an explanation of why conscious experiences are private, when what we actually want is an explanation of why we *think* conscious experiences aren't private. So I'm not a massive fan of this.
+
 ### Kammerer
+
+Kammer proposes a "theoretical introspection hypothesis":
 
 > The TIH states that the content of these theories includes, so to speak, the following statements:
 >
@@ -35,11 +173,19 @@ The most relevant part of this seems to be the explanation of the privacy and in
 >
 > Appearances can be fallacious, and a mind can be deceived by the way states of affairs appear. And here is what happens in cases of fallacious appearances: when a subject S has a fallacious appearance of A, S is affected in exactly the same way as in cases of veridical appearances of A, except that A is not the case. That is to say, when a subject S has a fallacious appearance of A, it is in state E (E being, and being nothing but, what is common to the way S is affected in all the cases in which A appears veridically to her), but A is not the case.
 
+#### How do I implement this?
+
+This is a claim about intuitive theories of mind. I think I probably need some kind of logic engine to implement these.
+
 ### Armstrong
 
 > What the example shows is that, in certain cases, it is very natural for human beings to pass from something that is true: 'I do not perceive that X is Y', to something that may be false: 'I perceive that X is not Y'
 
 You can phrase this Bayesian-style. If seeing property Z in an X is highly correlated with it having property Y, then if you see an X without property Z, then it's reasonable to go from "I do not percieve that X is Y" to "I percieve X is not Y."
+
+#### How do I implement this?
+
+I can just do this inside a logic engine
 
 ## Classes
 
@@ -59,9 +205,7 @@ Webb and Graziano (2015):
 >
 > Based on the information contained in this simplified model, brain B would conclude that it possesses a phenomenon with all of the most salient aspects of attention – the ability to take mental possession of an object, focus one’s resources on it, and, ultimately, act on it – but without any of the mechanisms that make this process physically possible. It would conclude that it possesses a magical, non-physical essence, but one which can nevertheless act and exert causal control over behavior, a mysterious conclusion indeed.
 
-One fun note about "It would conclude that it possesses a magical, non-physical essence, but one which can nevertheless act and exert causal control over behavior, a mysterious conclusion indeed."-- Many humans have a similar intuition about their own bodies, cf.
-
-The other things Luke likes:
+One fun note about "It would conclude that it possesses a magical, non-physical essence, but one which can nevertheless act and exert causal control over behavior, a mysterious conclusion indeed."-- Many humans have a similar intuition about their own bodies, cf vitalism.
 
 
 ## Notes
@@ -99,6 +243,7 @@ The other things Luke likes:
                 - In the case of attention: because of bottom-up attention, you won't always be aware of how you should change it. Eg in the case where you are trying to avoid paying attention to the things at the peripheries, dampening it down.
         - A third story: There might be logic that can't be implemented within the attention system itself. Eg "If I'm paying close attention to the center of my visual field and it's a Friday, increase the attention to the color green". The attention system might not know whether it's Friday, so the verbal processing system needs to know when you're paying attention to the center of your visual field.
             - This requires that the logic has conditions about the attention
+- What things have qualia? Seems like "seeing red" has more associated qualia than "seeing a dog". Why is that? Maybe it's because redness can't be broken down as much?
 
 Maybe I want to represent knowledge as a graph. Nodes are strings and edges are labelled with words.
 
@@ -144,17 +289,6 @@ components:
 - Language module
 
 You answer "What are you thinking about" by looking at your attention schema.
-
-Your plans
-
-## Random notes
-
-- I could make a bunch of attentional experiments that you could do on the internet.
-
-
-
-
-
 
 ## New notes
 
@@ -215,3 +349,14 @@ Modules:
 - Readibility
 - it would be nice if the mind in question seemed like a natural design to solve the problem it's trying to solve.
 
+## Theorem provers
+
+Looks like I probably want to use a real theorem prover.
+
+Desiderata:
+
+- Python bindings
+- lightweight
+- Provide proofs that people can understand
+
+I wonder if my proofs will ever get complicated enough that I actually need a powerful prover. If not, maybe I should just use some random simple prover.

@@ -1,4 +1,5 @@
-<p>This code implements the core of a simple agent with an attention schema.</p>
+<div style="margin-left: 40px; width: 50%;">
+  <p>This code implements the core of a simple agent with an attention schema.</p>
 
 <p>Here’s a diagram of the architecture implemented in this agent:</p>
 
@@ -6,7 +7,7 @@
 
 <p>And here’s the code:</p>
 
-<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">SimpleAttentionSchemaAgent</span><span class="p">:</span>
+<div class="language-python highlighter-rouge"><pre class="highlight"><code><span class="k">class</span> <span class="nc">SimpleAttentionSchemaAgent</span><span class="p">:</span>
   <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">visual_system</span> <span class="o">=</span> <span class="n">VisualSystem</span><span class="p">()</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">()</span>
@@ -86,3 +87,5 @@
 <p>It seems like in the course of writing the whole program out, I’ll end up being forced to make a lot of implementation decisions about the architecture of this mind. Some of those decisions will map directly onto the hypotheses about consciousness which I listed above. However, many of them will just be choices that I make. I’m excited about this, because it seems that as a natural consequence of writing the code in full detail I’ll need to do the equivalent of generating many hypotheses about the implementation of human consciousness of a similar flavor as listed above.</p>
 
 <p>At this stage it looks like I’ll have to write the details of the model and the planner out in full. It’s less clear how the visual system will need to work.</p>
+
+</div>
