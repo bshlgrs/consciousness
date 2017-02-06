@@ -13,7 +13,7 @@ Here's a diagram of the architecture implemented in this agent:
 And here's the code:
 
 ```python
-def SimpleAttentionSchemaAgent:
+class SimpleAttentionSchemaAgent:
   def __init__(self):
     self.visual_system = VisualSystem()
     self.model = Model()

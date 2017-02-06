@@ -12,7 +12,7 @@ def SimpleAttentionSchemaAgent:
     classes for each component.
     """
     # Process world
-    self.visual_system.update(visual_input)
+    self.visual_system.process_visual_input(visual_input)
 
     # Update world schema with visual information from the visual system.
     self.model.world_schema.update_with_visual_info(self.visual_system.visual_info())
@@ -20,7 +20,7 @@ def SimpleAttentionSchemaAgent:
     # Update attention schema with the information about visual attention
     # that the visual system can provide
     self.model.attention_schema.update_with_visual_attention_info(
-      self.visual_system.visual_attention_schema_info())
+      self.visual_system.visual_attention_info())
 
     # Plan action. The planner uses the information available to it from
     # the visual system directly and from its world schema and attention schema.
