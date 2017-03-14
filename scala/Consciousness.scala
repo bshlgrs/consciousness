@@ -3,6 +3,12 @@
 //  that Mary learns something when she sees red, and that zombies are
 //  conceivable.
 
+// This code represents a model of consciousness that would suggest Mary,
+// inverted spectrum, and zombies, to *readers of the code*, or someone to whose
+// internal model of the world included this code as an explicit model.
+// **It does not represent an agent who has an intuition that suggests Mary,
+// inverted spectrum, and zombies.**
+
 // Visual qualia are represented as a triple of numbers--hue, saturation, and
 // value. Agents cannot read these numbers directly. These numbers are relative
 // to a scale determined by some private feature of the visual system.
