@@ -1,13 +1,5 @@
-/// This sketch of a program illustrates a model of consciousness which
-//  would lead someone who used it to believe that inverted spectrum is possible,
-//  that Mary learns something when she sees red, and that zombies are
-//  conceivable.
-
-// This code represents a model of consciousness that would suggest Mary,
-// inverted spectrum, and zombies, to *readers of the code*, or someone to whose
-// internal model of the world included this code as an explicit model.
-// **It does not represent an agent who has an intuition that suggests Mary,
-// inverted spectrum, and zombies.**
+// This code implements a model of consciousness that suggests Mary,
+// inverted spectrum, and zombies.
 
 // Visual qualia are represented as a triple of numbers--hue, saturation, and
 // value. Agents cannot read these numbers directly. These numbers are relative
@@ -162,6 +154,18 @@ trait VerbalSystemToRestOfBrainInterface {
     // todo: there is no reference to the cartesianTheater anywhere else in this code
     cartesianTheater.show(quale); return ()
   }
+}
+
+class Memory {
+  val memory = mutable.List()
+
+  def getQualeForName(label: String): Option[VisualQuale]
+
+  def rememberLabel(label: String) {
+    memory.append(LabelMemoryItem(label))
+  }
+
+  def getQualeForName(label: String) = ???
 }
 
 // Your brain also knows about physical objects, which do things according to
