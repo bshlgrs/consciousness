@@ -18,6 +18,9 @@
 // So this agent thinks that the inverted spectrum would be possible (and probably
 // the default assumption about interpersonal qualia comparisons)
 
+// The verbal system of the agent cannot directly access any properties of their
+// qualia. So they are ineffable.
+
 // Qualia cannot be constructed by the agent directly, they can only be remembered
 // by when you saw them or what their names are. This feature leads to the
 // knowledge argument.
