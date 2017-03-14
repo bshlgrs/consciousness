@@ -1,5 +1,5 @@
 /// This sketch of a program illustrates a model of consciousness which
-//  would lead an agent to believe that inverted spectrum is possible,
+//  would lead someone who used it to believe that inverted spectrum is possible,
 //  that Mary learns something when she sees red, and that zombies are
 //  conceivable.
 
