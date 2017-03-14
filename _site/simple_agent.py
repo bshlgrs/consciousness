@@ -6,7 +6,7 @@ class Agent:
 
         self.model.attach_visual_system(self.vision_system)
 
-        self.planning_system.attach_visual_system(self.vision_system)
+        self.planning_system.attach_vision_system(self.vision_system)
         self.planning_system.attach_model(self.model)
 
     def step(self, visual_input):
