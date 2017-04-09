@@ -1,7 +1,7 @@
 from z3 import *
 
-set_param(proof=True)
 
+set_param(proof=True)
 
 Quale = DeclareSort('Quale')
 Color = DeclareSort('Color')
@@ -32,85 +32,148 @@ class Z3Helper:
         arg_vars = [Const(arg, type) for (arg, type) in zip(args, types)]
         return ForAll(arg_vars, claim(*arg_vars))
 
-def inverted_spectrum():
-    f = Function("f", Color, Quale)
-    g = Function("g", Color, Quale)
+class PhilosopherBot:
+    def __init__(self):
+        self.memory = {}
+        self.current_quale = None
+        self.logic_module = PhilosopherLogicModule()
 
-    axioms = [
-        Z3Helper.myforall([Color, Color], lambda x, y: (x == y) == (f(x) == f(y))),
-        Z3Helper.myforall([Color, Color], lambda x, y: (x == y) == (g(x) == g(y))),
-        Z3Helper.enumerate_type_completely(Color, [Red, Green, Blue]),
-        Z3Helper.enumerate_type_completely(Quale, [Quale1, Quale2, Quale3]),
-        Not(Z3Helper.myforall([Color], lambda x: f(x) == g(x)))]
+    def ask_question(self, question):
+        if question[0] == "logic":
+            return self.logic_module.check_statement(
+                self.logic_module.build_z3_expr(question[1])
+            )
+        if question[0] == "logic-brief":
+            res = self.logic_module.check_statement(
+                self.logic_module.build_z3_expr(question[1])
+            )
 
-    solver = Solver()
-    solver.add(axioms)
+            if res['satisfiability'] == sat:
+                if res['negation_satisfiability'] == sat:
+                    return "Both that statement and its negation are possible."
+                else:
+                    return "That statement is provable."
+            else:
+                if res['negation_satisfiability'] == sat:
+                    return "That statement is definitely false."
+                else:
+                    return "I believe a contradiction, apparently."
 
-    ## Inverted spectrum
-    print solver.check()
-    print solver.model()
-    print solver.model().eval(f(Green))
-    print solver.model().eval(g(Green))
+class PhilosopherLogicModule:
+    def __init__(self):
+        self.concepts = {}
+        self.build_concepts()
 
-def inverted_spectrum_2():
-    # We have this thing called "vision". For every human, it converts a color to a quale.
-    vision = Function("vision", Human, Color, Quale)
+        set_param(proof=True)
+        self.solver = Solver()
+        self.solver.add(self.axioms())
 
-    # For all humans, the experiences of viewing color1 and color2 are the same
-    # iff color1 == color2.
-    human_vision_axiom = Z3Helper.myforall([Human, Color, Color],
-        lambda observer, color1, color2:
-            (color1 == color2) == (vision(observer, color1) == vision(observer, color2))
-    )
+    def build_z3_expr(self, expr, ctx = {}):
+        if isinstance(expr, basestring):
+            if expr in ctx:
+                return ctx[expr]
+            else:
+                return self.concepts[expr]
+        elif expr[0] == "forall":
+            _, types_sexpr, claim_sexpr = expr
 
-    # So we give the theorem prover all our axioms:
-    axioms = [
-        # there are exactly three colors, red green and blue
-        Z3Helper.enumerate_type_completely(Color, [Red, Green, Blue]),
-        # there are three qualia, numbers 1, 2, and 3
-        Z3Helper.enumerate_type_completely(Quale, [Quale1, Quale2, Quale3]),
-        human_vision_axiom,
+            types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
+            claim = self.build_z3_expr(claim_sexpr, dict([str(obj), obj] for obj in types, **ctx))
 
-        # Now we assert that it's not true that for all pairs of humans and colors,
-        # the humans see them the same way.
-        Not(Z3Helper.myforall([Human, Human, Color],
-            lambda h1, h2, c: vision(h1, c) == vision(h2, c)))
-    ]
+            return ForAll(types, claim)
+        elif expr[0] == "forsome":
+            _, types_sexpr, claim_sexpr = expr
 
-    solver = Solver()
-    solver.add(axioms)
+            types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
+            claim = self.build_z3_expr(claim_sexpr, dict([str(obj), obj] for obj in types))
 
-    # We check if the axioms are consistent:
-    print solver.check() # it responds "sat", meaning that the axioms are satisfiable
-    print solver.model() # it prints a model of the axioms. To wit:
+            return claim
+        elif expr[0] == "==":
+            return self.build_z3_expr(expr[1], ctx) == self.build_z3_expr(expr[2], ctx)
+        elif expr[0] == "!=":
+            return self.build_z3_expr(expr[1], ctx) != self.build_z3_expr(expr[2], ctx)
+        else:
+            return self.concepts[expr[0]](*[self.build_z3_expr(x, ctx) for x in expr[1:]])
 
-    """
-        [Blue = Color!val!2,
-         Quale3 = Quale!val!2,
-         Quale1 = Quale!val!0,
-         Quale2 = Quale!val!1,
-         c!0 = Color!val!0,
-         Green = Color!val!1,
-         h1!2 = Human!val!0,
-         Red = Color!val!0,
-         h2!1 = Human!val!1,
-         k!35 = [Color!val!1 -> Color!val!1,
-                 Color!val!2 -> Color!val!2,
-                 else -> Color!val!0],
-         vision!37 = [(Human!val!1, Color!val!0) -> Quale!val!0,
-                      (Human!val!1, Color!val!1) -> Quale!val!1,
-                      (Human!val!0, Color!val!2) -> Quale!val!1,
-                      (Human!val!0, Color!val!1) -> Quale!val!0,
-                      else -> Quale!val!2],
-         vision = [else -> vision!37(k!36(Var(0)), k!35(Var(1)))],
-         k!36 = [Human!val!1 -> Human!val!1, else -> Human!val!0]]
-    """
+    def build_concepts(self):
+        # We have this thing called "vision". For every human, it converts a color to a quale.
+        self.concepts["vision"] = \
+            Function("vision", Human, Color, Quale)
+        self.concepts["human"] = Human
+        self.concepts["color"] = Color
+        self.concepts["quale"] = Quale
+        self.concepts["and"] = And
+        self.concepts["int"] = IntSort()
 
-    # This is constructing two humans, h1!2 and h2!1.
-    # In the definition of vision!37, you can see that when Human!val!1 sees
-    # Color!val!0, they get Quale!val!0. But when Human!val!0 sees it, they get
-    # Quale!val!2.
+    def axioms(self):
+        # For all humans, the experiences of viewing color1 and color2 are the same
+        # iff color1 == color2.
+        vision = self.concepts["vision"]
+        human_vision_axiom = Z3Helper.myforall([Human, Color, Color],
+            lambda observer, color1, color2:
+                (color1 == color2) == (vision(observer, color1) == vision(observer, color2))
+        )
 
-    # So the theorem prover has thought of inverted spectra.
+        axioms = [
+            # there are exactly three colors, red green and blue
+            Z3Helper.enumerate_type_completely(Color, [Red, Green, Blue]),
+            # there are three qualia, numbers 1, 2, and 3
+            Z3Helper.enumerate_type_completely(Quale, [Quale1, Quale2, Quale3]),
+            human_vision_axiom,
 
-inverted_spectrum_2()
+            # Now we assert that it's not true that for all pairs of humans and colors,
+            # the humans see them the same way.
+            Not(Z3Helper.myforall([Human, Human, Color],
+                lambda h1, h2, c: vision(h1, c) == vision(h2, c)))
+        ]
+
+        return axioms
+
+    def check_statement(self, statement):
+        result = {}
+
+        self.solver.push()
+        self.solver.add(Not(statement))
+        negation_satisfiability = self.solver.check()
+        if negation_satisfiability == sat:
+            result["negation_model"] = self.solver.model()
+
+        result["negation_satisfiability"] = negation_satisfiability
+
+        self.solver.pop()
+        self.solver.push()
+
+        self.solver.add(statement)
+
+        satisfiability = self.solver.check()
+        if satisfiability == sat:
+            result["model"] = self.solver.model()
+
+        result["satisfiability"] = satisfiability
+
+        self.solver.pop()
+
+        return result
+
+    # def eval_expr(self, statement):
+    #     self.solver.check()
+    #     model = self.solver.model()
+
+
+
+philosopher_bot = PhilosopherBot()
+# print philosopher_bot.ask_question(("forall", ["int", "int"], lambda x, y: x > y))
+
+# print philosopher_bot.ask_question(
+#     ("logic", ("forall", (("human", "h1"), ("human", "h2"), ("color", "c")),
+#         ("==", ("vision", "h1", "c"), ("vision", "h2", "c"))))
+# )
+
+
+# Is it plausible that two humans have the same qualia
+print philosopher_bot.ask_question(
+    ("logic-brief",
+        ("forsome", (("human", "h1"), ("human", "h2")),
+            ("forall", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
+    ))
+)
