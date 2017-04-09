@@ -16,6 +16,7 @@ Quale1 = Const("Quale1", Quale)
 Quale2 = Const("Quale2", Quale)
 Quale3 = Const("Quale3", Quale)
 
+
 class Z3Helper:
     @staticmethod
     def enumerate_type_completely(type, options):
@@ -34,16 +35,27 @@ class Z3Helper:
 
 class PhilosopherBot:
     def __init__(self):
-        self.memory = {}
+        self.color_memory = ["red", "green", "green"]
         self.current_quale = None
-        self.logic_module = PhilosopherLogicModule()
+        self.logic_module = PhilosopherLogicModule(self)
+
+    def memory_axioms(self):
+        memory = self.logic_module.concepts["memory"]
+        myself = self.logic_module.concepts["myself"]
+        qualia = [Const("q" + str(time), Quale) for (time, x) in enumerate(self.color_memory)]
+
+        return ([memory(myself, time, quale) for (time, quale) in enumerate(qualia)] +
+            [[qualia[x_time] != qualia[y_time], qualia[x_time] == qualia[y_time]][self.color_memory[x_time] == self.color_memory[y_time]]
+                for (x_time, x) in enumerate(self.color_memory)
+                for (y_time, y) in enumerate(self.color_memory)
+                if x_time < y_time])
 
     def ask_question(self, question):
         if question[0] == "logic":
             return self.logic_module.check_statement(
                 self.logic_module.build_z3_expr(question[1])
             )
-        if question[0] == "logic-brief":
+        elif question[0] == "logic-brief":
             res = self.logic_module.check_statement(
                 self.logic_module.build_z3_expr(question[1])
             )
@@ -58,10 +70,27 @@ class PhilosopherBot:
                     return "That statement is definitely false."
                 else:
                     return "I believe a contradiction, apparently."
+        elif question[0] == "logic-exhibit":
+            res = self.logic_module.check_statement(
+               self.logic_module.build_z3_expr(('for-some', question[1], question[2]))
+            )
+
+            if res['satisfiability'] == sat:
+                model = res['model']
+                names = [x[1] for x in question[1]]
+                return { str(x): self.logic_module.verbalize(model[x]) for x in model.decls() if str(x) in names }
+
+        else:
+            return "I don't know how to answer that"
+
+    def current_state(self):
+        if self.current_quale:
+            pass
 
 class PhilosopherLogicModule:
-    def __init__(self):
+    def __init__(self, bot):
         self.concepts = {}
+        self.bot = bot
         self.build_concepts()
 
         set_param(proof=True)
@@ -69,19 +98,21 @@ class PhilosopherLogicModule:
         self.solver.add(self.axioms())
 
     def build_z3_expr(self, expr, ctx = {}):
-        if isinstance(expr, basestring):
+        if isinstance(expr, int):
+            return expr
+        elif isinstance(expr, basestring):
             if expr in ctx:
                 return ctx[expr]
             else:
                 return self.concepts[expr]
-        elif expr[0] == "forall":
+        elif expr[0] == "for-all":
             _, types_sexpr, claim_sexpr = expr
 
             types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
             claim = self.build_z3_expr(claim_sexpr, dict([str(obj), obj] for obj in types, **ctx))
 
             return ForAll(types, claim)
-        elif expr[0] == "forsome":
+        elif expr[0] == "for-some":
             _, types_sexpr, claim_sexpr = expr
 
             types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
@@ -99,10 +130,16 @@ class PhilosopherLogicModule:
         # We have this thing called "vision". For every human, it converts a color to a quale.
         self.concepts["vision"] = \
             Function("vision", Human, Color, Quale)
+        self.concepts['memory'] = Function("memory", Human, IntSort(), Quale, BoolSort())
+        self.concepts['myself'] = Const('myself', Human)
         self.concepts["human"] = Human
         self.concepts["color"] = Color
         self.concepts["quale"] = Quale
         self.concepts["and"] = And
+        self.concepts["*"] = lambda x, y: x * y
+        self.concepts["+"] = lambda x, y: x + y
+        self.concepts["implies"] = Implies
+
         self.concepts["int"] = IntSort()
 
     def axioms(self):
@@ -114,6 +151,16 @@ class PhilosopherLogicModule:
                 (color1 == color2) == (vision(observer, color1) == vision(observer, color2))
         )
 
+        # You only remember one experience at a particular time.
+        memory = self.concepts["memory"]
+        memory_axiom = Z3Helper.myforall([Human, IntSort(), Quale, Quale],
+            lambda observer, time, q1, q2:
+                Implies(
+                    And(memory(observer, time, q1), memory(observer, time, q2)),
+                    q1 == q2
+                )
+        )
+
         axioms = [
             # there are exactly three colors, red green and blue
             Z3Helper.enumerate_type_completely(Color, [Red, Green, Blue]),
@@ -121,16 +168,23 @@ class PhilosopherLogicModule:
             Z3Helper.enumerate_type_completely(Quale, [Quale1, Quale2, Quale3]),
             human_vision_axiom,
 
+            memory_axiom,
             # Now we assert that it's not true that for all pairs of humans and colors,
             # the humans see them the same way.
             Not(Z3Helper.myforall([Human, Human, Color],
-                lambda h1, h2, c: vision(h1, c) == vision(h2, c)))
+                lambda h1, h2, c: vision(h1, c) == vision(h2, c))),
+
         ]
 
         return axioms
 
     def check_statement(self, statement):
         result = {}
+
+        print self.bot.memory_axioms()
+
+        self.solver.push()
+        self.solver.add(self.bot.memory_axioms())
 
         self.solver.push()
         self.solver.add(Not(statement))
@@ -153,7 +207,17 @@ class PhilosopherLogicModule:
 
         self.solver.pop()
 
+        # pop off current state
+        self.solver.pop()
+
         return result
+
+    def verbalize(self, thing):
+        # print thing
+        return str(thing)
+        if isinstance(thing, IntNumRef):
+            return str(thing)
+        fail()
 
     # def eval_expr(self, statement):
     #     self.solver.check()
@@ -162,18 +226,43 @@ class PhilosopherLogicModule:
 
 
 philosopher_bot = PhilosopherBot()
-# print philosopher_bot.ask_question(("forall", ["int", "int"], lambda x, y: x > y))
 
+# # Is it plausible that two humans have the same qualia
 # print philosopher_bot.ask_question(
-#     ("logic", ("forall", (("human", "h1"), ("human", "h2"), ("color", "c")),
-#         ("==", ("vision", "h1", "c"), ("vision", "h2", "c"))))
+#     ("logic-brief",
+#         ("for-some", (("human", "h1"), ("human", "h2")),
+#             ("for-all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
+#     ))
 # )
 
+# # Is it plausible that a*a == a+a
+# print philosopher_bot.ask_question(
+#     ("logic-exhibit",
+#         (("int", "x"),),
+#         ("==", ("*", "x", "x"), ("+", "x", "x"))
+#     )
+# )
 
-# Is it plausible that two humans have the same qualia
+# print philosopher_bot.ask_question(
+#     ("logic-exhibit",
+#         (("human", "h1"), ("human", "h2")),
+#         ("and",
+#             ("!=", "h1", "h2"),
+#             ("for-all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
+#         )
+#     )
+# )
+
 print philosopher_bot.ask_question(
     ("logic-brief",
-        ("forsome", (("human", "h1"), ("human", "h2")),
-            ("forall", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
-    ))
+        ("for-all", (("quale", "q1"), ("quale", "q2")),
+            ("implies",
+                ("and",
+                    ("memory", "myself", 2, "q1"),
+                    ("memory", "myself", 1, "q2")
+                ),
+                ("==", "q1", "q2")
+            )
+        )
+    )
 )
