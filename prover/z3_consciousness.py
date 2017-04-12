@@ -30,14 +30,26 @@ class Z3Helper:
     def myforall(types, claim):
         args = claim.__code__.co_varnames
         assert len(types) == len(args)
+        print types, args
         arg_vars = [Const(arg, type) for (arg, type) in zip(args, types)]
         return ForAll(arg_vars, claim(*arg_vars))
+
+    @staticmethod
+    def myexists(types, claim):
+        args = claim.__code__.co_varnames
+        assert len(types) == len(args)
+        arg_vars = [Const(arg, type) for (arg, type) in zip(args, types)]
+        return Exists(arg_vars, claim(*arg_vars))
+
 
 class PhilosopherBot:
     def __init__(self):
         self.color_memory = ["red", "green", "green"]
         self.current_quale = None
         self.logic_module = PhilosopherLogicModule(self)
+
+    def show_color(self, color):
+        self.color_memory.append(color)
 
     def memory_axioms(self):
         memory = self.logic_module.concepts["memory"]
@@ -105,13 +117,31 @@ class PhilosopherLogicModule:
                 return ctx[expr]
             else:
                 return self.concepts[expr]
-        elif expr[0] == "for-all":
+        elif expr[0] == "for-all" or expr[0] == 'exists':
             _, types_sexpr, claim_sexpr = expr
 
             types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
             claim = self.build_z3_expr(claim_sexpr, dict([str(obj), obj] for obj in types, **ctx))
 
-            return ForAll(types, claim)
+            klass = { 'for-all': ForAll, 'exists': Exists }[expr[0]]
+            return klass(types, claim)
+        elif expr[0] == "let":
+            _, decls_and_definitions, body = expr
+            ## This line is terrible code, but I'm leaving it in because Python
+            # programmers are officially okay with it. I'm using zip with a splat
+            # for unzipping. Sadface.
+            decls, definition_sexprs = zip(*((x[:2], x[2]) for x in decls_and_definitions))
+
+            return self.build_z3_expr(
+                ("for-all",
+                    decls,
+                    ("implies",
+                        tuple(["and"] + list(definition_sexprs)),
+                        body)
+                ),
+                ctx
+            )
+
         elif expr[0] == "for-some":
             _, types_sexpr, claim_sexpr = expr
 
@@ -131,6 +161,7 @@ class PhilosopherLogicModule:
         self.concepts["vision"] = \
             Function("vision", Human, Color, Quale)
         self.concepts['memory'] = Function("memory", Human, IntSort(), Quale, BoolSort())
+        self.concepts['show-color'] = Function("show-color", Human, Color, Human)
         self.concepts['myself'] = Const('myself', Human)
         self.concepts["human"] = Human
         self.concepts["color"] = Color
@@ -139,12 +170,14 @@ class PhilosopherLogicModule:
         self.concepts["*"] = lambda x, y: x * y
         self.concepts["+"] = lambda x, y: x + y
         self.concepts["implies"] = Implies
+        self.concepts["age"] = Function("age", Human, IntSort())
 
         self.concepts["int"] = IntSort()
 
     def axioms(self):
         # For all humans, the experiences of viewing color1 and color2 are the same
         # iff color1 == color2.
+        # (I need this because I want there to be 0 or 1 memories of a color.)
         vision = self.concepts["vision"]
         human_vision_axiom = Z3Helper.myforall([Human, Color, Color],
             lambda observer, color1, color2:
@@ -159,6 +192,25 @@ class PhilosopherLogicModule:
                     And(memory(observer, time, q1), memory(observer, time, q2)),
                     q1 == q2
                 )
+        )
+
+        # memory_creation_axiom = Z3Helper.myforall([Human, Quale, Human],
+        #     lambda h1, q, h2:
+        #         Implies()
+        # )
+
+
+        age = self.concepts['age']
+        age_axiom = Z3Helper.myforall([Human, IntSort()],
+            lambda h, age_num:
+                And(
+                    Z3Helper.myforall([IntSort(), Quale], lambda t, q:
+                        Implies(memory(h, t, q), t < age_num)
+                    ),
+                    Z3Helper.myexists([Quale], lambda q:
+                        memory(h, age_num - 1, q)
+                    )
+                ) == (age(h) == age_num)
         )
 
         axioms = [
@@ -180,8 +232,6 @@ class PhilosopherLogicModule:
 
     def check_statement(self, statement):
         result = {}
-
-        print self.bot.memory_axioms()
 
         self.solver.push()
         self.solver.add(self.bot.memory_axioms())
@@ -224,24 +274,26 @@ class PhilosopherLogicModule:
     #     model = self.solver.model()
 
 
-
 philosopher_bot = PhilosopherBot()
 
-# # Is it plausible that two humans have the same qualia
-# print philosopher_bot.ask_question(
-#     ("logic-brief",
-#         ("for-some", (("human", "h1"), ("human", "h2")),
-#             ("for-all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
-#     ))
-# )
+# Is it plausible that two humans have the same qualia associated with all colors?
+print philosopher_bot.ask_question(
+    ("logic-brief",
+        ("for-some", (("human", "h1"), ("human", "h2")),
+            ("for-all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
+    ))
+)
 
-# # Is it plausible that a*a == a+a
-# print philosopher_bot.ask_question(
-#     ("logic-exhibit",
-#         (("int", "x"),),
-#         ("==", ("*", "x", "x"), ("+", "x", "x"))
-#     )
-# )
+print "hey important here:"
+# Is it plausible that a*a == a+a
+print philosopher_bot.ask_question(
+    ("logic-brief",
+        ("for-all",
+            [("int", "y")],
+            ('exists', [('int', 'x')], ('==', 'y', ('+', 'x', 'x')))
+        )
+    )
+)
 
 # print philosopher_bot.ask_question(
 #     ("logic-exhibit",
@@ -254,15 +306,32 @@ philosopher_bot = PhilosopherBot()
 # )
 
 print philosopher_bot.ask_question(
-    ("logic-brief",
-        ("for-all", (("quale", "q1"), ("quale", "q2")),
-            ("implies",
-                ("and",
-                    ("memory", "myself", 2, "q1"),
-                    ("memory", "myself", 1, "q2")
-                ),
-                ("==", "q1", "q2")
-            )
+    ('logic-brief',
+        ('let',
+            [
+                ('quale', 'q1', ("memory", "myself", 2, "q1")),
+                ('quale', 'q2', ("memory", "myself", 1, "q2"))
+            ],
+            ("==", "q1", "q2")
         )
+    )
+)
+
+# done inverted spectrum
+# Todo: zombies. Knowledge argument.
+
+print philosopher_bot.ask_question(
+    ('logic-exhibit',
+        [('int', 'x')],
+        (('=='), ('age', 'myself'), 'x')
+    )
+)
+
+philosopher_bot.show_color("red")
+
+print philosopher_bot.ask_question(
+    ('logic-exhibit',
+        [('int', 'x')],
+        (('=='), ('age', 'myself'), 'x')
     )
 )
