@@ -4,8 +4,8 @@ from z3 import *
 set_param(proof=True)
 
 # There are 16 colors
-Color = BitVecSort(2)
-ColorQuale = BitVecSort(2)
+Color = BitVecSort(4)
+ColorQuale = BitVecSort(4)
 
 
 class Z3Helper:
