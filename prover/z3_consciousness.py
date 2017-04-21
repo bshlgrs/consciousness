@@ -3,26 +3,17 @@ from z3 import *
 
 set_param(proof=True)
 
-Quale = DeclareSort('Quale')
-Color = DeclareSort('Color')
-Human = DeclareSort('Human')
-
-
-Red = Const("Red", Color)
-Blue = Const("Blue", Color)
-Green = Const("Green", Color)
-
-Quale1 = Const("Quale1", Quale)
-Quale2 = Const("Quale2", Quale)
-Quale3 = Const("Quale3", Quale)
+# There are 16 colors
+Color = BitVecSort(2)
+ColorQuale = BitVecSort(2)
 
 
 class Z3Helper:
     @staticmethod
     def enumerate_type_completely(type, options):
-        blah = Const("blah", type)
+        thing = Const("thing-of-type-" + str(type), type)
         return And(
-            ForAll([blah], Or(*[blah == option for option in options])),
+            ForAll([thing], Or(*[thing == option for option in options])),
             Distinct(options)
         )
 
@@ -30,7 +21,6 @@ class Z3Helper:
     def myforall(types, claim):
         args = claim.__code__.co_varnames
         assert len(types) == len(args)
-        print types, args
         arg_vars = [Const(arg, type) for (arg, type) in zip(args, types)]
         return ForAll(arg_vars, claim(*arg_vars))
 
@@ -41,23 +31,40 @@ class Z3Helper:
         arg_vars = [Const(arg, type) for (arg, type) in zip(args, types)]
         return Exists(arg_vars, claim(*arg_vars))
 
+    # cyclic_groups = {}
+
+    # @staticmethod
+    # def cyclic_group(order):
+    #     if order in cyclic_groups:
+    #         return cyclic_groups[order]
+    #     else:
+    #         Type =
+
+    # def assert_size_of_sort(sort):
+    #     def claim(*arg_vars):
+    #         arg_vars = [Const(str(sort), sort) for _ in ]
+    #         return [x != y for x in arg_vars for y in arg_vars if ]
+    #     return
 
 class PhilosopherBot:
     def __init__(self):
-        self.color_memory = ["red", "green", "green"]
+        self.color_memory = [1, 1, 2]
         self.current_quale = None
         self.logic_module = PhilosopherLogicModule(self)
+        # self.visual_module = VisualModule(self)
+        # self.attention_schema = AttentionSchema(self)
 
     def show_color(self, color):
+        # self.visual_module.show_color(color)
         self.color_memory.append(color)
 
     def memory_axioms(self):
         memory = self.logic_module.concepts["memory"]
         myself = self.logic_module.concepts["myself"]
-        qualia = [Const("q" + str(time), Quale) for (time, x) in enumerate(self.color_memory)]
+        qualia = [Const("q" + str(time), ColorQuale) for (time, x) in enumerate(self.color_memory)]
 
         return ([memory(myself, time, quale) for (time, quale) in enumerate(qualia)] +
-            [[qualia[x_time] != qualia[y_time], qualia[x_time] == qualia[y_time]][self.color_memory[x_time] == self.color_memory[y_time]]
+            [qualia[x_time] - qualia[y_time] == x - y
                 for (x_time, x) in enumerate(self.color_memory)
                 for (y_time, y) in enumerate(self.color_memory)
                 if x_time < y_time])
@@ -79,7 +86,7 @@ class PhilosopherBot:
                     return "That statement is provable."
             else:
                 if res['negation_satisfiability'] == sat:
-                    return "That statement is definitely false."
+                    return "That statement is not consistent with my other beliefs."
                 else:
                     return "I believe a contradiction, apparently."
         elif question[0] == "logic-exhibit":
@@ -98,6 +105,8 @@ class PhilosopherBot:
     def current_state(self):
         if self.current_quale:
             pass
+
+
 
 class PhilosopherLogicModule:
     def __init__(self, bot):
@@ -158,14 +167,15 @@ class PhilosopherLogicModule:
 
     def build_concepts(self):
         # We have this thing called "vision". For every human, it converts a color to a quale.
+        self.concepts["human"] = Human = DeclareSort('Human')
+        self.concepts["color"] = Color
+        self.concepts["color-quale"] = ColorQuale
+
         self.concepts["vision"] = \
-            Function("vision", Human, Color, Quale)
-        self.concepts['memory'] = Function("memory", Human, IntSort(), Quale, BoolSort())
+            Function("vision", Human, Color, ColorQuale)
+        self.concepts['memory'] = Function("memory", Human, IntSort(), ColorQuale, BoolSort())
         self.concepts['show-color'] = Function("show-color", Human, Color, Human)
         self.concepts['myself'] = Const('myself', Human)
-        self.concepts["human"] = Human
-        self.concepts["color"] = Color
-        self.concepts["quale"] = Quale
         self.concepts["and"] = And
         self.concepts["*"] = lambda x, y: x * y
         self.concepts["+"] = lambda x, y: x + y
@@ -175,6 +185,8 @@ class PhilosopherLogicModule:
         self.concepts["int"] = IntSort()
 
     def axioms(self):
+        Human = self.concepts["human"]
+        Color = self.concepts["color"]
         # For all humans, the experiences of viewing color1 and color2 are the same
         # iff color1 == color2.
         # (I need this because I want there to be 0 or 1 memories of a color.)
@@ -186,7 +198,7 @@ class PhilosopherLogicModule:
 
         # You only remember one experience at a particular time.
         memory = self.concepts["memory"]
-        memory_axiom = Z3Helper.myforall([Human, IntSort(), Quale, Quale],
+        memory_axiom = Z3Helper.myforall([Human, IntSort(), ColorQuale, ColorQuale],
             lambda observer, time, q1, q2:
                 Implies(
                     And(memory(observer, time, q1), memory(observer, time, q2)),
@@ -204,22 +216,17 @@ class PhilosopherLogicModule:
         age_axiom = Z3Helper.myforall([Human, IntSort()],
             lambda h, age_num:
                 And(
-                    Z3Helper.myforall([IntSort(), Quale], lambda t, q:
+                    Z3Helper.myforall([IntSort(), ColorQuale], lambda t, q:
                         Implies(memory(h, t, q), t < age_num)
                     ),
-                    Z3Helper.myexists([Quale], lambda q:
+                    Z3Helper.myexists([ColorQuale], lambda q:
                         memory(h, age_num - 1, q)
                     )
                 ) == (age(h) == age_num)
         )
 
         axioms = [
-            # there are exactly three colors, red green and blue
-            Z3Helper.enumerate_type_completely(Color, [Red, Green, Blue]),
-            # there are three qualia, numbers 1, 2, and 3
-            Z3Helper.enumerate_type_completely(Quale, [Quale1, Quale2, Quale3]),
             human_vision_axiom,
-
             memory_axiom,
             # Now we assert that it's not true that for all pairs of humans and colors,
             # the humans see them the same way.
@@ -273,65 +280,68 @@ class PhilosopherLogicModule:
     #     self.solver.check()
     #     model = self.solver.model()
 
+if __name__ == "__main__":
 
-philosopher_bot = PhilosopherBot()
 
-# Is it plausible that two humans have the same qualia associated with all colors?
-print philosopher_bot.ask_question(
-    ("logic-brief",
-        ("for-some", (("human", "h1"), ("human", "h2")),
-            ("for-all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
-    ))
-)
+    # # Is it plausible that two humans have the same qualia associated with all colors?
+    # # should say "Both that statement and its negation are possible."
+    # print philosopher_bot.ask_question(
+    #     ("logic-brief",
+    #         ("for-some", (("human", "h1"), ("human", "h2")),
+    #             ("for-all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
+    #     ))
+    # )
 
-print "hey important here:"
-# Is it plausible that a*a == a+a
-print philosopher_bot.ask_question(
-    ("logic-brief",
-        ("for-all",
-            [("int", "y")],
-            ('exists', [('int', 'x')], ('==', 'y', ('+', 'x', 'x')))
+
+    # Is it plausible that a*a == a+a
+    print philosopher_bot.ask_question(
+        ("logic-brief",
+            ("for-all",
+                [("int", "y")],
+                ('exists', [('int', 'x')], ('==', 'x', ('+', 'y', 1)))
+            )
         )
     )
-)
 
-# print philosopher_bot.ask_question(
-#     ("logic-exhibit",
-#         (("human", "h1"), ("human", "h2")),
-#         ("and",
-#             ("!=", "h1", "h2"),
-#             ("for-all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
-#         )
-#     )
-# )
-
-print philosopher_bot.ask_question(
-    ('logic-brief',
-        ('let',
-            [
-                ('quale', 'q1', ("memory", "myself", 2, "q1")),
-                ('quale', 'q2', ("memory", "myself", 1, "q2"))
-            ],
-            ("==", "q1", "q2")
+    print philosopher_bot.ask_question(
+        ("logic-brief",
+            ('for-all',
+                (("human", "h1"), ("human", "h2")),
+                ("and",
+                    ("!=", "h1", "h2"),
+                    ("for-all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
+                )
+            )
         )
     )
-)
 
-# done inverted spectrum
-# Todo: zombies. Knowledge argument.
-
-print philosopher_bot.ask_question(
-    ('logic-exhibit',
-        [('int', 'x')],
-        (('=='), ('age', 'myself'), 'x')
+    print philosopher_bot.ask_question(
+        ('logic-brief',
+            ('let',
+                [
+                    ('color-quale', 'q1', ("memory", "myself", 2, "q1")),
+                    ('color-quale', 'q2', ("memory", "myself", 1, "q2"))
+                ],
+                ("==", "q1", "q2")
+            )
+        )
     )
-)
 
-philosopher_bot.show_color("red")
+    # # done inverted spectrum
+    # # Todo: zombies. Knowledge argument.
 
-print philosopher_bot.ask_question(
-    ('logic-exhibit',
-        [('int', 'x')],
-        (('=='), ('age', 'myself'), 'x')
+    print philosopher_bot.ask_question(
+        ('logic-exhibit',
+            [('int', 'x')],
+            (('=='), ('age', 'myself'), 'x')
+        )
     )
-)
+
+    philosopher_bot.show_color(2)
+
+    print philosopher_bot.ask_question(
+        ('logic-exhibit',
+            [('int', 'x')],
+            (('=='), ('age', 'myself'), 'x')
+        )
+    )
