@@ -169,8 +169,7 @@ class PhilosopherLogicModule:
             Function("vision", Human, Color, ColorQuale)
         self.concepts['memory'] = Function("memory", Human, IntSort(), ColorQuale, BoolSort())
         self.concepts['current-quale'] = Function("current-quale", Human, ColorQuale, BoolSort())
-#        self.concepts['show-color'] = Function("show-color", Human, Color, Human)
-        self.concepts['has-illusion'] = Function("has-illusion", Human, StateOfAffairs, BoolSort())
+        self.concepts['has-illusion'] = Function("has-illusion", Human, StateOfAffairs, StateOfAffairs, BoolSort())
         self.concepts['experience-of'] = Function("experience-of", Human, StateOfAffairs, ColorQuale)
         self.concepts['seeing-color'] = Function("seeing-color", Human, Color, StateOfAffairs)
         self.concepts['having-experience'] = Function("having-experience", Human, ColorQuale, StateOfAffairs)
@@ -179,11 +178,13 @@ class PhilosopherLogicModule:
         self.concepts["*"] = lambda x, y: x * y
         self.concepts["+"] = lambda x, y: x + y
         self.concepts["implies"] = Implies
-        self.concepts['age'] = Function('fghjfj2', Human, IntSort())
+        self.concepts['age'] = Function('age', Human, IntSort())
 
         self.concepts["int"] = IntSort()
 
     def axioms(self):
+        axioms = []
+
         Human = self.concepts["human"]
         Color = self.concepts["color"]
         # For all humans, the experiences of viewing color1 and color2 are the same
@@ -194,6 +195,7 @@ class PhilosopherLogicModule:
             lambda observer, color1, color2:
                 (color1 == color2) == (vision(observer, color1) == vision(observer, color2))
         )
+        axioms.append(human_vision_axiom)
 
         # You only remember one experience at a particular time.
         memory = self.concepts["memory"]
@@ -204,14 +206,11 @@ class PhilosopherLogicModule:
                     q1 == q2
                 )
         )
-
-        # memory_creation_axiom = Z3Helper.myforall([Human, Quale, Human],
-        #     lambda h1, q, h2:
-        #         Implies()
-        # )
+        axioms.append(memory_axiom)
 
 
-        # age = self.concepts['nansai']
+#       The following is broken, I think?
+        # age = self.concepts['age']
         # age_axiom = Z3Helper.myforall([Human, IntSort()],
         #     lambda h, age_num:
         #         And(
@@ -224,17 +223,48 @@ class PhilosopherLogicModule:
         #         ) == (age(h) == age_num)
         # )
 
+# self.concepts['has-illusion'] = Function("has-illusion", Human, StateOfAffairs, BoolSort())
+# self.concepts['experience-of'] = Function("experience-of", Human, StateOfAffairs, ColorQuale)
+# self.concepts['seeing-color'] = Function("seeing-color", Human, Color, StateOfAffairs)
+# self.concepts['having-experience'] = Function("having-experience", Human, ColorQuale, StateOfAffairs)
+        has_illusion = self.concepts['has-illusion']
+        StateOfAffairs = self.concepts['state-of-affairs']
 
 
-        axioms = [
-            human_vision_axiom,
-            memory_axiom,
-            # Now we assert that it's not true that for all pairs of humans and colors,
-            # the humans see them the same way.
-            Not(Z3Helper.myforall([Human, Human, Color],
-                lambda h1, h2, c: vision(h1, c) == vision(h2, c))),
-            # age_axiom
-        ]
+        experience_of = self.concepts['experience-of']
+        seeing_color = self.concepts['seeing-color']
+        current_quale = self.concepts['current-quale']
+
+        experience_of_seeing_color_axiom = Z3Helper.myforall([Human, Color],
+            lambda h, c: experience_of(h, seeing_color(h, c)) == vision(h, c)
+        )
+        axioms.append(experience_of_seeing_color_axiom)
+
+        having_experience = self.concepts['having-experience']
+        experience_of_having_experience_axiom = Z3Helper.myforall([Human, ColorQuale],
+            lambda h, e: experience_of(h, having_experience(h, e)) == e
+        )
+        axioms.append(experience_of_having_experience_axiom)
+
+
+
+        illusion_definition = Z3Helper.myforall([Human, StateOfAffairs, StateOfAffairs], lambda h, s1, s2:
+            # h is having an illusion of s1 if the real StateOfAffairs is s2 iff:
+            has_illusion(h, s1, s2) == And(
+                # s1 is not actually happening
+                s1 != s2,
+                # and h is affected in the ways that they are affected when s1 is real.
+                current_quale(h, experience_of(h, s1))
+            )
+        )
+
+        # axioms = [
+        #     human_vision_axiom,
+        #     memory_axiom,
+        #     # age_axiom, # this breaks everything
+
+
+        # ]
 
         return axioms
 
@@ -362,8 +392,8 @@ if __name__ == "__main__":
     print philosopher_bot.ask_question(
         ("logic-brief",
             ('for-some',
-                [("human", "h1")],
-                ("has-illusion", "h1", ("seeing-color", "h1", RED))
+                [("human", "h1"), ('state-of-affairs', 's')],
+                ("has-illusion", "h1", ("seeing-color", "h1", RED), 's')
             )
         )
     )
@@ -373,8 +403,12 @@ if __name__ == "__main__":
     print philosopher_bot.ask_question(
         ("logic-brief",
             ('for-some',
-                [("human", "h1")],
-                ("has-illusion", "h1", ("having-experience", "h1", ("vision", "h1", RED)))
+                [("human", "h1"), ('state-of-affairs', 's')],
+                ("has-illusion", "h1",
+                    ('having-experience', 'h1',
+                        ('experience-of', 'h1', ("seeing-color", "h1", RED))),
+                    's'
+                )
             )
         )
     )
