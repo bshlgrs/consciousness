@@ -51,37 +51,6 @@ axioms.append(myForAll([WorldFact],
                        lambda wf: myExists([Color], lambda c: make_WorldColorFact(c) == wf) == is_WorldColorFact(wf)
              ))
 
-# consistent_facts = Function('consistent_facts', WorldFact, WorldFact, BoolSort())
-# axioms.append(
-#     myForAll([WorldFact, WorldFact], lambda wf1, wf2:
-#             And(
-#                 # Facts are consistent if they are about different things.
-#                 Implies(is_ExperienceFact(wf1) != is_ExperienceFact(wf2), consistent_facts(wf1, wf2)),
-
-#                 # Facts are inconsistent if they are both about the world color, and they are different colors
-#                 myForAll([Color, Color], lambda c1, c2:
-#                                  Implies(And(wf1 == make_WorldColorFact(c1), wf2 == make_WorldColorFact(c2)),
-#                                     consistent_facts(wf1, wf2) == (c1 == c2)
-#                             )
-#                 ),
-
-#                 # Facts are consistent if they are about different people or if they are the same.
-#                 myForAll([Agent, Quale, Agent, Quale], lambda a1, q1, a2, q2:
-#                             Implies(And(wf1 == make_ExperienceFact(a1, q1), wf2 == make_ExperienceFact(a2, q2)),
-#                                     consistent_facts(wf1, wf2) == Or(q1 == q2, a1 != a2)
-#                             )
-#                 )
-#             )
-#         )
-# )
-
-
-# # Worlds consist only of consistent facts
-# axioms.append(myForAll([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
-#     Implies(And(state_contains_fact(ws, wf1), state_contains_fact(ws, wf2)),
-#             consistent_facts(wf1, wf2))
-#     )
-# )
 
 
 
@@ -141,14 +110,16 @@ world_is_red_fact = make_WorldColorFact(red)
 buck_is_seeing_red_fact = make_ExperienceFact(buck, vision(buck, red))
 illusion_world_state = Const('illusion_world_state', WorldState)
 
-axioms.append(has_illusion(buck, illusion_world_state, buck_is_seeing_red_fact))
+axioms.append(has_illusion(buck, illusion_world_state, world_is_red_fact))
 
 
 s.add(axioms)
 
 
 print "OH I AM ABOUT TO CHECK"
+
+# print s.to_smt2()
+
 print s.check()
 print s.model()
-
-exit(0)
+# print s.reason_unknown()
