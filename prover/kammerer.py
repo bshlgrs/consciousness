@@ -51,51 +51,73 @@ axioms.append(myForAll([WorldFact],
                        lambda wf: myExists([Color], lambda c: make_WorldColorFact(c) == wf) == is_WorldColorFact(wf)
              ))
 
-consistent_facts = Function('consistent_facts', WorldFact, WorldFact, BoolSort())
-axioms.append(
-    myForAll([WorldFact, WorldFact], lambda wf1, wf2:
-            And(
-                # Facts are consistent if they are about different things.
-                Implies(is_ExperienceFact(wf1) != is_ExperienceFact(wf2), consistent_facts(wf1, wf2)),
+# consistent_facts = Function('consistent_facts', WorldFact, WorldFact, BoolSort())
+# axioms.append(
+#     myForAll([WorldFact, WorldFact], lambda wf1, wf2:
+#             And(
+#                 # Facts are consistent if they are about different things.
+#                 Implies(is_ExperienceFact(wf1) != is_ExperienceFact(wf2), consistent_facts(wf1, wf2)),
 
-                # Facts are inconsistent if they are both about the world color, and they are different colors
-                myForAll([Color, Color], lambda c1, c2:
-                                 Implies(And(wf1 == make_WorldColorFact(c1), wf2 == make_WorldColorFact(c2)),
-                                    consistent_facts(wf1, wf2) == (c1 == c2)
-                            )
-                ),
+#                 # Facts are inconsistent if they are both about the world color, and they are different colors
+#                 myForAll([Color, Color], lambda c1, c2:
+#                                  Implies(And(wf1 == make_WorldColorFact(c1), wf2 == make_WorldColorFact(c2)),
+#                                     consistent_facts(wf1, wf2) == (c1 == c2)
+#                             )
+#                 ),
 
-                # Facts are consistent if they are about different people or if they are the same.
-                myForAll([Agent, Quale, Agent, Quale], lambda a1, q1, a2, q2:
-                            Implies(And(wf1 == make_ExperienceFact(a1, q1), wf2 == make_ExperienceFact(a2, q2)),
-                                    consistent_facts(wf1, wf2) == Or(q1 == q2, a1 != a2)
-                            )
-                )
-            )
-        )
-)
+#                 # Facts are consistent if they are about different people or if they are the same.
+#                 myForAll([Agent, Quale, Agent, Quale], lambda a1, q1, a2, q2:
+#                             Implies(And(wf1 == make_ExperienceFact(a1, q1), wf2 == make_ExperienceFact(a2, q2)),
+#                                     consistent_facts(wf1, wf2) == Or(q1 == q2, a1 != a2)
+#                             )
+#                 )
+#             )
+#         )
+# )
+
+
+# # Worlds consist only of consistent facts
+# axioms.append(myForAll([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
+#     Implies(And(state_contains_fact(ws, wf1), state_contains_fact(ws, wf2)),
+#             consistent_facts(wf1, wf2))
+#     )
+# )
 
 
 
-# Worlds consist only of consistent facts
 axioms.append(myForAll([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
-    Implies(And(state_contains_fact(ws, wf1), state_contains_fact(ws, wf2)),
-            consistent_facts(wf1, wf2))
+  Implies(And(state_contains_fact(ws, wf1), state_contains_fact(ws, wf2)),
+    And(
+
+#                 # Facts are inconsistent if they are both about the world color, and they are different colors
+      myForAll([Color, Color], lambda c1, c2:
+                       Implies(And(wf1 == make_WorldColorFact(c1), wf2 == make_WorldColorFact(c2)),
+                          c1 == c2
+                  )
+      )
     )
-)
+  )
+))
+
 
 
 
 
 
 fact_consistent_with_world = Function('fact_consistent_with_world', WorldFact, WorldState, BoolSort())
+# axioms.append(myForAll([WorldFact, WorldState], lambda wf, ws:
+#                       fact_consistent_with_world(wf, ws) == myForAll([WorldFact], lambda wf2:
+#                             Implies(state_contains_fact(ws, wf2), consistent_facts(wf, wf2))
+#                     )))
+
 axioms.append(myForAll([WorldFact, WorldState], lambda wf, ws:
-                      fact_consistent_with_world(wf, ws) == myForAll([WorldFact], lambda wf2:
-                            Implies(state_contains_fact(ws, wf2), consistent_facts(wf, wf2))
-                    )))
-
-
-
+  fact_consistent_with_world(wf, ws) == myExists([WorldState], lambda ws2:
+    And(state_contains_fact(ws2, wf),
+      myForAll([WorldFact],
+        lambda wf2: Implies(state_contains_fact(ws, wf2), state_contains_fact(ws2, wf2)))
+  ))
+  )
+)
 
 
 
@@ -117,7 +139,7 @@ red = Const('red', Color)
 world_is_red_fact = make_WorldColorFact(red)
 illusion_world_state = Const('illusion_world_state', WorldState)
 
-# axioms.append(has_illusion(buck, illusion_world_state, world_is_red_fact))
+axioms.append(has_illusion(buck, illusion_world_state, world_is_red_fact))
 
 
 s.add(axioms)
