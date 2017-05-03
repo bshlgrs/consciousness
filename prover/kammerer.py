@@ -134,12 +134,14 @@ axioms.append(
 )
 
 
+
 buck = Const('buck', Agent)
 red = Const('red', Color)
 world_is_red_fact = make_WorldColorFact(red)
+buck_is_seeing_red_fact = make_ExperienceFact(buck, vision(buck, red))
 illusion_world_state = Const('illusion_world_state', WorldState)
 
-axioms.append(has_illusion(buck, illusion_world_state, world_is_red_fact))
+axioms.append(has_illusion(buck, illusion_world_state, buck_is_seeing_red_fact))
 
 
 s.add(axioms)
