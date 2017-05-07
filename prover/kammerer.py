@@ -1,7 +1,7 @@
 from z3 import *
 from z3_helper import Z3Helper
 
-s = Solver() # Then('simplify', 'solve-eqs', 'smt').solver()
+# s = Solver() # Then('simplify', 'solve-eqs', 'smt').solver()
 
 myForAll = Z3Helper.myforall
 myExists = Z3Helper.myexists
@@ -98,6 +98,7 @@ illusion_world_state = Const('illusion_world_state', WorldState)
 
 def consider(axiom):
   # s.reset()
+  s = Solver()
   s.push()
   s.add(axioms)
   s.add(axiom)
@@ -110,7 +111,6 @@ def consider(axiom):
   except Exception as e:
     print e
 
-  s.reset()
 
 
 
