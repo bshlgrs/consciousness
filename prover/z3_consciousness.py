@@ -130,16 +130,12 @@ class PhilosopherLogicModule:
             return self.concepts[expr[0]](*[self.build_z3_expr(x, ctx) for x in expr[1:]])
 
     def build_concepts(self):
-        # We have this thing called "vision". For every human, it converts a color to a quale.
-        self.concepts["human"] = Human = DeclareSort('Human')
-        self.concepts["color"] = Color
-        self.concepts["color-quale"] = ColorQuale = BitVecSort(1)
 
         self.concepts["and"] = And
         self.concepts["*"] = lambda x, y: x * y
         self.concepts["+"] = lambda x, y: x + y
         self.concepts["implies"] = Implies
-        self.concepts['age'] = Function('age', Human, IntSort())
+
 
         self.concepts["int"] = IntSort()
 
@@ -169,7 +165,6 @@ class PhilosopherLogicModule:
             Function("having-experience", Human, ColorQuale, WorldFact)
         self.concepts['myself'] = Const('myself', Human)
 
-        [world_fact_type_axiom, [world_color_fact, experience_fact]] = \
 
         # For all humans, the experiences of viewing color1 and color2 are the same
         # iff color1 == color2.
@@ -243,6 +238,8 @@ class PhilosopherLogicModule:
                 current_quale(h, experience_of(h, wf))
             )
         )
+
+        self.concepts['age'] = Function('age', Human, IntSort())
 
         axioms.append(illusion_definition)
 

@@ -26,3 +26,10 @@ class Z3Helper:
     @staticmethod
     def has_set_of(owner_sort, things_sort, function_name):
         return Function(function_name, [things_sort, owner_sort], BoolSort())
+
+    @staticmethod
+    def build_maybe_sort(sort):
+        Maybe = Datatype('Maybe<%s>' % sort.name())
+        Maybe.declare('Just', ('maybe_value', sort))
+        Maybe.declare('Nothing')
+        return Maybe.create()
