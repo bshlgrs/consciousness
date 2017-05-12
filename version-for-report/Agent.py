@@ -15,18 +15,20 @@ class Agent:
     def memory_axioms(self):
         memory = self.reasoning_system.concepts["memory"]
         myself = self.reasoning_system.concepts["myself"]
+        current_quale = self.reasoning_system.concepts["current_quale"]
         ColorQuale = self.reasoning_system.concepts["color_quale"]
         qualia = [Const("q" + str(time), ColorQuale) for (time, x) in enumerate(self.color_memory)]
 
-        return (#[memory(myself, time, quale) for (time, quale) in enumerate(qualia)] +
+        return ([memory(myself, time) - current_quale(myself) == x - self.current_color
+                  for (time, x) in enumerate(self.color_memory)] +
             [qualia[x_time] - qualia[y_time] == x - y
                 for (x_time, x) in enumerate(self.color_memory)
                 for (y_time, y) in enumerate(self.color_memory)
                 if x_time < y_time])
 
     def current_color_axioms(self):
-        current_quale = self.reasoning_system.concepts['current_quale']
-        myself = self.reasoning_system.concepts["myself"]
+        pass
+        # TODO
 
     def ask_question(self, question):
         if question[0] == "logic":
@@ -48,6 +50,22 @@ class Agent:
                     return "No."
                 else:
                     return "I believe a contradiction, apparently."
+        elif question[0] == "is_it_possible":
+            res = self.reasoning_system.check_statement(
+                self.reasoning_system.build_z3_expr(question[1])
+            )
+
+            if res['satisfiability'] == sat:
+                if res['negation_satisfiability'] == sat:
+                    return "Yes."
+                else:
+                    return "Yes. In fact, it's guaranteed by my other beliefs."
+            else:
+                if res['negation_satisfiability'] == sat:
+                    return "No, that's impossible."
+                else:
+                    return "I believe a contradiction, apparently."
+
         elif question[0] == "logic_exhibit":
             res = self.reasoning_system.check_statement(
                self.reasoning_system.build_z3_expr(('for_some', question[1], question[2]))

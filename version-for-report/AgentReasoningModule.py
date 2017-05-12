@@ -95,21 +95,31 @@ class AgentReasoningModule:
 
         self.concepts["Human"] = Human = DeclareSort('Human')
         self.concepts['myself'] = Const('myself', Human)
-        self.concepts["color"] = Color = BitVecSort(5)
+        self.concepts["Color"] = Color = BitVecSort(5)
         self.concepts["color_quale"] = ColorQuale = BitVecSort(5)
         self.concepts["state_of_affairs"] = StateOfAffairs = DeclareSort('StateOfAffairs')
 
         WorldFact = DeclareSort('WorldFact')
 
-        self.concepts["vision"] = vision = \
-            Function("vision", Human, Color, ColorQuale)
         self.concepts['memory'] = memory = \
              Function("memory", Human, IntSort(), ColorQuale)
         self.concepts['current_quale'] = current_quale = \
                 Function("current_quale", Human, ColorQuale)
+        self.concepts["vision"] = vision = \
+            Function("vision", Human, Color, ColorQuale)
 
-        #### Begin Kammerer stuff
 
+        axioms.extend(self.theoretical_introspection_hypothesis_axioms())
+        return axioms
+
+    def theoretical_introspection_hypothesis_axioms(self):
+        axioms = []
+        ColorQuale = self.concepts["color_quale"]
+        Human = self.concepts["Human"]
+        Color = self.concepts["Color"]
+
+        vision = self.concepts["vision"]
+        current_quale = self.concepts["current_quale"]
 
         MaybeColorQuale = Z3Helper.build_maybe_sort(ColorQuale)
 
@@ -181,9 +191,6 @@ class AgentReasoningModule:
             )
           )
         )
-
-
-        # End Kammerer
 
         return axioms
 
