@@ -4,7 +4,7 @@ class AgentVerbalSystem:
     def __init__(self, reasoning_system):
         self.reasoning_system = reasoning_system
 
-    def ask_question(self, question):
+    def respond_to_question(self, question):
         if question[0] == "logic":
             return self.reasoning_system.check_statement(
                 self.reasoning_system.build_z3_expr(question[1])

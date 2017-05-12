@@ -34,5 +34,5 @@ class Agent:
         return (current_color_axioms + memory_axioms)
 
 
-    def ask_question(self, question):
-        return self.verbal_system.ask_question(question)
+    def respond_to_question(self, question):
+        return self.verbal_system.respond_to_question(question)

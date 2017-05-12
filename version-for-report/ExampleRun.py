@@ -6,17 +6,17 @@ GREEN = 1
 if __name__ == "__main__":
     agent = Agent()
 
-    print "Q: For two humans h1 and h2, do they have the same qualia associated with every color?"
-    print agent.ask_question(
+    print "Q: Suppose there are two humans Bob and Jane, do they have the same qualia associated with every color?"
+    print agent.respond_to_question(
         ("logic_brief",
-            ("for_some", (("Human", "h1"), ("Human", "h2")),
-                ("for_all", (("Color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
+            ("for_some", (("Human", "bob"), ("Human", "jane")),
+                ("for_all", (("Color", "c"),), ("==", ("vision", "bob", "c"), ("vision", "jane", "c")))
         ))
     )
 
     print
     print "Q: For all y, does there exist an x such that x = y + 1?"
-    print agent.ask_question(
+    print agent.respond_to_question(
         ("logic_brief",
             ("for_all",
                 [("int", "y")],
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
     print
     print "Q: For all two humans, do they see colors the same? Should be 'idk'"
-    print agent.ask_question(
+    print agent.respond_to_question(
         ("logic_brief",
             ('for_all',
                 (("Human", "h1"), ("Human", "h2")),
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     print
     print "Q: Are your memories at timestep 1 and 2 of the same color?"
-    print agent.ask_question(
+    print agent.respond_to_question(
         ('logic_brief',
             ("==", ("memory", "myself", 1), ("memory", "myself", 2))
         )
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
     print
     print "Q: Are you seeing the same color now as you saw at timestep 1?"
-    print agent.ask_question(
+    print agent.respond_to_question(
         ('logic_brief',
             ("==", ("memory", "myself", 1), ("current_quale", "myself"))
         )
@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     print
     print "Q: Is it possible for an agent to have an illusion of red?"
-    print agent.ask_question(
+    print agent.respond_to_question(
         ("is_it_possible",
             ('for_some',
                 [("Human", "buck"), ('WorldState', 's'), ("Color", 'c')],
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     print
     print "Q: Is it possible for you to have the illusion that Buck is experiencing a color?"
-    print agent.ask_question(
+    print agent.respond_to_question(
         ("is_it_possible",
             ('for_some',
                 [("Human", "buck"), ('WorldState', 's'), ("Color", 'c')],
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
     print
     print "Q: Is it possible for Buck to have an illusion that he is having the experience of redness?"
-    print agent.ask_question(
+    print agent.respond_to_question(
         ("is_it_possible",
             ('for_some',
                 [("Human", "buck"), ('WorldState', 's'), ("Color", 'c')],
