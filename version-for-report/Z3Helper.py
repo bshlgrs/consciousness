@@ -3,7 +3,7 @@ from z3 import *
 class Z3Helper:
     @staticmethod
     def enumerate_type_completely(type, options):
-        thing = Const("thing-of-type-" + str(type), type)
+        thing = z3.Const("thing-of-type-" + str(type), type)
         return And(
             ForAll([thing], Or(*[thing == option for option in options])),
             Distinct(options)

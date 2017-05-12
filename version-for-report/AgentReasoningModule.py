@@ -1,74 +1,7 @@
 from z3 import *
-from z3_helper import Z3Helper
+from Z3Helper import Z3Helper
 
-set_param(proof=True)
-
-class PhilosopherBot:
-    def __init__(self):
-        self.color_memory = [1, 1, 2]
-        self.current_color = 2
-        self.logic_module = PhilosopherLogicModule(self)
-
-    def show_color(self, color):
-        # self.visual_module.show_color(color)
-        self.color_memory.append(self.current_color)
-        self.current_color = color
-
-    def memory_axioms(self):
-        memory = self.logic_module.concepts["memory"]
-        myself = self.logic_module.concepts["myself"]
-        ColorQuale = self.logic_module.concepts["color_quale"]
-        qualia = [Const("q" + str(time), ColorQuale) for (time, x) in enumerate(self.color_memory)]
-
-        return ([memory(myself, time, quale) for (time, quale) in enumerate(qualia)] +
-            [qualia[x_time] - qualia[y_time] == x - y
-                for (x_time, x) in enumerate(self.color_memory)
-                for (y_time, y) in enumerate(self.color_memory)
-                if x_time < y_time])
-
-    def current_color_axioms(self):
-        current_quale = self.logic_module.concepts['current_quale']
-        myself = self.logic_module.concepts["myself"]
-
-    def ask_question(self, question):
-        if question[0] == "logic":
-            return self.logic_module.check_statement(
-                self.logic_module.build_z3_expr(question[1])
-            )
-        elif question[0] == "logic_brief":
-            res = self.logic_module.check_statement(
-                self.logic_module.build_z3_expr(question[1])
-            )
-
-            if res['satisfiability'] == sat:
-                if res['negation_satisfiability'] == sat:
-                    return "Both that statement and its negation are possible."
-                else:
-                    return "That statement is provable."
-            else:
-                if res['negation_satisfiability'] == sat:
-                    return "That statement is not consistent with my other beliefs."
-                else:
-                    return "I believe a contradiction, apparently."
-        elif question[0] == "logic_exhibit":
-            res = self.logic_module.check_statement(
-               self.logic_module.build_z3_expr(('for_some', question[1], question[2]))
-            )
-
-            if res['satisfiability'] == sat:
-                model = res['model']
-                names = [x[1] for x in question[1]]
-                return { str(x): self.logic_module.verbalize(model[x]) for x in model.decls() if str(x) in names }
-
-        else:
-            return "I don't know how to answer that"
-
-    def current_state(self):
-        if self.current_quale:
-            pass
-
-
-class PhilosopherLogicModule:
+class AgentReasoningModule:
     def __init__(self, bot):
         self.concepts = {}
         self.bot = bot
@@ -83,6 +16,7 @@ class PhilosopherLogicModule:
             return self.try_build_z3_expr(expr, ctx)
         except z3types.Z3Exception as e:
             print expr, "failed to build. Types:"
+
             for frag in expr:
                 try:
                     blah = self.try_build_z3_expr(frag, ctx)
@@ -150,10 +84,10 @@ class PhilosopherLogicModule:
 
     def build_concepts(self):
         self.concepts["and"] = And
+        self.concepts["or"] = Or
         self.concepts["*"] = lambda x, y: x * y
         self.concepts["+"] = lambda x, y: x + y
         self.concepts["implies"] = Implies
-
         self.concepts["int"] = IntSort()
 
     def axioms(self):
@@ -170,24 +104,9 @@ class PhilosopherLogicModule:
         self.concepts["vision"] = vision = \
             Function("vision", Human, Color, ColorQuale)
         self.concepts['memory'] = memory = \
-             Function("memory", Human, IntSort(), ColorQuale, BoolSort())
+             Function("memory", Human, IntSort(), ColorQuale)
         self.concepts['current_quale'] = current_quale = \
                 Function("current_quale", Human, ColorQuale)
-
-
-
-        # You only remember one experience at a particular time.
-        memory = self.concepts["memory"]
-        memory_axiom = Z3Helper.myforall([Human, IntSort(), ColorQuale, ColorQuale],
-            lambda observer, time, q1, q2:
-                Implies(
-                    And(memory(observer, time, q1), memory(observer, time, q2)),
-                    q1 == q2
-                )
-        )
-        axioms.append(memory_axiom)
-
-        self.concepts['age'] = Function('age', Human, IntSort())
 
         #### Begin Kammerer stuff
 
@@ -300,138 +219,3 @@ class PhilosopherLogicModule:
         self.solver.pop()
 
         return result
-
-    def verbalize(self, thing):
-        # print thing
-        return str(thing)
-        if isinstance(thing, IntNumRef):
-            return str(thing)
-        fail()
-
-    # def eval_expr(self, statement):
-    #     self.solver.check()
-    #     model = self.solver.model()
-
-if __name__ == "__main__":
-    # # Is it plausible that two humans have the same qualia associated with all colors?
-    # # should say "Both that statement and its negation are possible."
-    # print philosopher_bot.ask_question(
-    #     ("logic_brief",
-    #         ("for_some", (("Human", "h1"), ("Human", "h2")),
-    #             ("for_all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
-    #     ))
-    # )
-
-    philosopher_bot = PhilosopherBot()
-
-    print "Q: For all y, does there exist an x such that x = y + 1"
-    print philosopher_bot.ask_question(
-        ("logic_brief",
-            ("for_all",
-                [("int", "y")],
-                ('exists', [('int', 'x')], ('==', 'x', ('+', 'y', 1)))
-            )
-        )
-    )
-
-    print
-    print "Q: For all two humans, do they see colors the same?"
-    print philosopher_bot.ask_question(
-        ("logic_brief",
-            ('for_all',
-                (("Human", "h1"), ("Human", "h2")),
-                ("and",
-                    ("!=", "h1", "h2"),
-                    ("for_all", (("color", "c"),), ("==", ("vision", "h1", "c"), ("vision", "h2", "c")))
-                )
-            )
-        )
-    )
-
-    print
-    print "Q: Are my memories at timestep 1 and 2 of the same color?"
-    print philosopher_bot.ask_question(
-        ('logic_brief',
-            ('let',
-                [
-                    ('color_quale', 'q1', ("memory", "myself", 2, "q1")),
-                    ('color_quale', 'q2', ("memory", "myself", 1, "q2"))
-                ],
-                ("==", "q1", "q2")
-            )
-        )
-    )
-
-    # # # done inverted spectrum
-    # # # Todo: zombies. Knowledge argument.
-    # print "Q: What's your age?"
-    # print philosopher_bot.ask_question(
-    #     ('logic_exhibit',
-    #         [('int', 'x')],
-    #         (('=='), ('age', 'myself'), 'x')
-    #     )
-    # )
-
-    # print "*shows color*"
-    # philosopher_bot.show_color(2)
-
-    # print "Q: What's your age again?"
-    # print philosopher_bot.ask_question(
-    #     ('logic_exhibit',
-    #         [('int', 'x')],
-    #         (('=='), ('age', 'myself'), 'x')
-    #     )
-    # )
-
-    # print "Q: What's 2 + 28?"
-    # print philosopher_bot.ask_question(
-    #     ('logic_exhibit',
-    #         [('int', 'x')],
-    #         (('=='), ('+', 2, 28), 'x')
-    #     )
-    # )
-
-    print
-    print "Q: Is it possible for an agent to have an illusion of red?"
-    print philosopher_bot.ask_question(
-        ("logic_brief",
-            ('for_some',
-                [("Human", "buck"), ('WorldState', 's'), ('color', 'c')],
-                ("has_illusion",
-                    "myself",
-                    "s",
-                    ("WorldColorFact", 'c')
-                )
-            )
-        )
-    )
-
-    print
-    print "Q: Is it possible for you to have the illusion that Buck is experiencing a color?"
-    print philosopher_bot.ask_question(
-        ("logic_brief",
-            ('for_some',
-                [("Human", "buck"), ('WorldState', 's'), ('color', 'c')],
-                ("has_illusion",
-                    "myself",
-                    "s",
-                    ("ExperienceFact", "buck", ("vision", "buck", 'c'))
-                )
-            )
-        )
-    )
-
-    print
-    print "Q: Is it possible for Buck to have an illusion that he is having the experience of redness?"
-    print philosopher_bot.ask_question(
-        ("logic_brief",
-            ('for_some',
-                [("Human", "buck"), ('WorldState', 's'), ('color', 'c')],
-                ("has_illusion",
-                    "buck",
-                    "s",
-                    ("ExperienceFact", "buck", ("vision", "buck", 'c'))
-                )
-            )
-        )
-    )
