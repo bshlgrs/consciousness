@@ -1,7 +1,7 @@
 from z3 import *
 from Z3Helper import Z3Helper
 
-class AgentReasoningModule:
+class AgentReasoningSystem:
     def __init__(self, bot):
         self.concepts = {}
         self.bot = bot
@@ -10,6 +10,7 @@ class AgentReasoningModule:
         set_param(proof=True)
         self.solver = Solver()
         self.solver.add(self.axioms())
+
 
     def build_z3_expr(self, expr, ctx = {}):
         try:
@@ -105,12 +106,38 @@ class AgentReasoningModule:
              Function("memory", Human, IntSort(), ColorQuale)
         self.concepts['current_quale'] = current_quale = \
                 Function("current_quale", Human, ColorQuale)
+
+
+
         self.concepts["vision"] = vision = \
             Function("vision", Human, Color, ColorQuale)
 
+        axioms.append(Z3Helper.myforall([Human, Human, Color, Color],
+            lambda h1, h2, c1, c2:
+                vision(h1, c1) - vision(h1, c2) == vision(h2, c1) - vision(h2, c2)))
 
         axioms.extend(self.theoretical_introspection_hypothesis_axioms())
         return axioms
+
+    def add_lemma(self, lemma):
+        res = self.check_statement(lemma)
+        print res
+        if res['negation_satisfiability'] == unsat:
+            if res['satisfiability'] == sat:
+                print "I guess that that lemma is true"
+                self.solver.add(lemma)
+            else:
+                print "I believe a contradiction"
+        else:
+            if res['satisfiability'] == sat:
+                print "That lemma is not provable"
+            else:
+                print "That lemma is provably false"
+
+    def add_lemmas(self):
+        # TODO: maybe do this
+        pass
+
 
     def theoretical_introspection_hypothesis_axioms(self):
         axioms = []
@@ -199,7 +226,7 @@ class AgentReasoningModule:
 
         self.solver.push()
 
-        self.solver.add(self.bot.memory_axioms())
+        self.solver.add(self.bot.sense_axioms())
 
         self.solver.push()
         self.solver.add(Not(statement))

@@ -26,7 +26,7 @@ if __name__ == "__main__":
     )
 
     print
-    print "Q: For all two humans, do they see colors the same?"
+    print "Q: For all two humans, do they see colors the same? Should be 'idk'"
     print agent.ask_question(
         ("logic_brief",
             ('for_all',
