@@ -53,10 +53,10 @@ if __name__ == "__main__":
     )
 
     print
-    print "Q: Are you seeing the same color now as you saw at timestep 1?"
+    print "Q: Are you seeing the same color now as you saw at timestep 2?"
     print agent.respond_to_question(
         ('logic_brief',
-            ("==", ("memory", "myself", 1), ("current_quale", "myself"))
+            ("==", ("memory", "myself", 2), ("current_quale", "myself"))
         )
     )
 

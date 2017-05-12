@@ -27,10 +27,12 @@ It's trying to add precision and clarity to a claim like "If an agent knew that 
 ## Theories of consciousness implemented
 
 - Something like Drescher's gensyms.
-  - I'm listing this first because it has a strong case that our expression of it is useful.
+    - I'm listing this first because we have a strong case that our expression of it is useful.
 - Kammerer's Theoretical Introspection Hypothesis
 
 ## What it can do
+
+Here's what you get if you run `ExampleRun.py`.
 
 ```
 Q: Suppose there are two humans Bob and Jane, do they have the same qualia associated with every color?
@@ -86,7 +88,7 @@ This comes from the interaction between the memory and the reasoning system. Ins
 
 The agent's AgentReasoningSystem has the idea of vision as a function of type `(Agent, Color) -> ColorQuale`. [link] And it knows that this function is injective -- that is, that agents always see different colors differently. (This rules out, for example, red-green color blindness.)
 
-When asked to make a judgement, the AgentReasoningSystem asks the AgentMemory about its visual memory. The AgentMemory only
+When asked to make a judgement, the AgentReasoningSystem calls the `sense_axioms` method of the main Agent object to get information on its current seen color and its memories. This method returns something like
 
 ## Obstacles
 
@@ -98,7 +100,7 @@ For example, “No matter what question I ask you, we’ll never be able to know
 
 Here’s what’s hard about it:
 
-- Talking about what other agents know. This is hard because classical logic doesn’t let you express things like “this agent doesn’t know X, but he does know that X -> Y”. To express this kind of thing, I’d need to use a modal logic theorem prover. I think that such theorem provers exist, but I don’t know how good they are.
+- Talking about what other agents know. This is hard because classical logic doesn’t let you express things like "this agent doesn’t know X, but he does know that X -> Y". To express this kind of thing, I’d need to use a modal logic theorem prover. I think that such theorem provers exist, but I don’t know how good they are.
 - Talking about the communication of other agents. This one is hard because it requires a formalized definition of “communication” which is powerful enough to express everything we want the agent to understand, but which the theorem prover understands well enough to prove things about. I don’t know if there exist theorem provers which can prove properties of communications between agents. (I think it’s 10% likely that it would be easy to build facts about communication on top of modal logic if I knew modal logic better.)
 
 Instead of expressing it properly, I’ve been expressing things like “Humans don’t necessarily have the same experience when they’re looking at the same color.” This expresses part of the idea, but doesn’t imply ineffibility.
@@ -107,6 +109,8 @@ Instead of expressing it properly, I’ve been expressing things like “Humans 
 
 - Not able to explain how some things are more intuitive than others
 - Not able to say that you believe one thing by default, but could be convinced to believe another.
+
+
 
 ### Unable to implement one-off reasoning
 

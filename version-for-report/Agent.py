@@ -26,7 +26,7 @@ class Agent:
         current_color_axioms = [memory(myself, time) - current_quale(myself) == x - self.current_color
                   for (time, x) in enumerate(self.color_memory)]
 
-        memory_axioms = [qualia[x_time] - qualia[y_time] == x - y
+        memory_axioms = [memory(myself, x_time) - memory(myself, y_time) == x - y
                 for (x_time, x) in enumerate(self.color_memory)
                 for (y_time, y) in enumerate(self.color_memory)
                 if x_time < y_time]
