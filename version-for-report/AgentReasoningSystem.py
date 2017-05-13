@@ -112,7 +112,7 @@ class AgentReasoningSystem:
         self.concepts["vision"] = vision = \
             Function("vision", Human, Color, ColorQuale)
 
-        axioms.append(Z3Helper.myforall([Human, Human, Color, Color],
+        axioms.append(Z3Helper.for_all([Human, Human, Color, Color],
             lambda h1, h2, c1, c2:
                 vision(h1, c1) - vision(h1, c2) == vision(h2, c1) - vision(h2, c2)))
 
@@ -165,7 +165,7 @@ class AgentReasoningSystem:
         self.concepts['WorldState'] = WorldState = DeclareSort('WorldState')
 
         consistent_facts = Function('consistent_facts', WorldFact, WorldFact, BoolSort())
-        axioms.append(Z3Helper.myforall([WorldFact, WorldFact], lambda wf1, wf2:
+        axioms.append(Z3Helper.for_all([WorldFact, WorldFact], lambda wf1, wf2:
           consistent_facts(wf1, wf2) ==
             If(is_ExperienceFact(wf1) != is_ExperienceFact(wf2),
               True,
@@ -179,7 +179,7 @@ class AgentReasoningSystem:
         state_contains_fact = Function('state_contains_fact', WorldState, WorldFact, BoolSort())
 
         # defining consistency
-        axioms.append(Z3Helper.myforall([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
+        axioms.append(Z3Helper.for_all([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
           Implies(And(state_contains_fact(ws, wf1), state_contains_fact(ws, wf2)),
             consistent_facts(wf1, wf2)
           )
@@ -187,7 +187,7 @@ class AgentReasoningSystem:
 
         # define experience_of
         experience_of = Function('experience_of', Human, WorldFact, MaybeColorQuale)
-        axioms.append(Z3Helper.myforall([Human, WorldFact], lambda a, wf:
+        axioms.append(Z3Helper.for_all([Human, WorldFact], lambda a, wf:
           experience_of(a, wf) ==
             If(is_WorldColorFact(wf),
               MaybeColorQuale.Just(vision(a, wf_color(wf))),
@@ -196,7 +196,7 @@ class AgentReasoningSystem:
         )
 
         fact_consistent_with_world = Function('fact_consistent_with_world', WorldFact, WorldState, BoolSort())
-        axioms.append(Z3Helper.myforall([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
+        axioms.append(Z3Helper.for_all([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
           Implies(
             And(fact_consistent_with_world(wf1, ws), state_contains_fact(ws, wf2)),
             consistent_facts(wf1, wf2)
@@ -205,7 +205,7 @@ class AgentReasoningSystem:
 
         self.concepts['has_illusion'] = has_illusion = Function('has_illusion', Human, WorldState, WorldFact, BoolSort())
         axioms.append(
-          Z3Helper.myforall([Human, WorldState, WorldFact], lambda a, ws, wf:
+          Z3Helper.for_all([Human, WorldState, WorldFact], lambda a, ws, wf:
             has_illusion(a, ws, wf) == And(
               Not(state_contains_fact(ws, wf)),
               Implies(MaybeColorQuale.is_Just(experience_of(a, wf)),

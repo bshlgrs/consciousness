@@ -10,14 +10,14 @@ class Z3Helper:
         )
 
     @staticmethod
-    def myforall(types, claim):
+    def for_all(types, claim):
         args = claim.__code__.co_varnames
         assert len(types) == len(args)
         arg_vars = [Const(arg, type) for (arg, type) in zip(args, types)]
         return ForAll(arg_vars, claim(*arg_vars))
 
     @staticmethod
-    def myexists(types, claim):
+    def there_exists(types, claim):
         args = claim.__code__.co_varnames
         assert len(types) == len(args)
         arg_vars = [Const(arg, type) for (arg, type) in zip(args, types)]

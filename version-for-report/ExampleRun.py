@@ -1,7 +1,7 @@
 from Agent import Agent
 
-RED = 0
-GREEN = 1
+RED = 10
+GREEN = 0
 
 if __name__ == "__main__":
     agent = Agent()
