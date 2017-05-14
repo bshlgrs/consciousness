@@ -162,19 +162,6 @@ My translation looks like this:
 - WorldStates consist of many WorldFacts. WorldFacts correspond to Kammerer's concept of a "state of affairs".
 - WorldFacts are either facts about what hue the world is (WorldColorFacts) or what hue an Agent is experiencing (ExperienceFacts).
 - WorldFacts are "consistent" iff it is concievable that both are true in the same world state. A more specific definition is: WorldFacts are consistent unless they're both WorldColorFacts and they disagree on what color the world is, or if they're both ExperienceFacts about the same agent and they disagree with color the agent is experiencing. This definition of consistent facts looks like this in the code:
-
-        consistent_facts = Function('consistent_facts', WorldFact, WorldFact, BoolSort())
-        axioms.append(Z3Helper.for_all([WorldFact, WorldFact], lambda wf1, wf2:
-            consistent_facts(wf1, wf2) ==
-            If(is_ExperienceFact(wf1) != is_ExperienceFact(wf2),
-                True,
-                If(is_ExperienceFact(wf1),
-                Or(wf_quale(wf1) == wf_quale(wf2), wf_human(wf1) != wf_human(wf2)),
-                wf1 == wf2
-                )
-            )
-        ))
-
 - Agents might have an experience of a particular WorldFact. This is what Kammerer describes as the state which is "part of the way in which [the subject] S is affected in all the cases in which [the state of affairs] A appears veridically to a subject".
     - Agents don't have an experience associated with every world fact. For example, the agent X has no experience of the fact "agent Y is experiencing red".
     - So in fact, an agent A has an experience of a WorldFact WF if:
@@ -186,15 +173,15 @@ My translation looks like this:
     -  If experience_of(A, WF) is a quale Q, then WS contains the ExperienceFact corresponding to A experiencing Q.
         - This means that for Jeff to be having an illusion of the world being red, Jeff must be experiencing red.
 
-The code for this is somewhat hard to read.
+The result of this is that the agent thinks that it's concievable that one might have an illusion of the world being a particular color, and it's concievable that one might have an illusion of *someone else* seeing a particular color, but it's not logically possible to have an illusion of your own conscious experience.
 
 ## Obstacles
 
-There are a bunch of things that it would be nice if my agent could prove, but which I think are very hard to make with Z3, the theorem prover I’m using, and I don’t know if they’re possible with any currently available theorem prover.
+There are a bunch of things that it would be nice if my agent could reason about, but which I think are very hard or impossible to express with Z3, the theorem prover I’m using, and I don’t know if they’re possible with any currently available theorem prover.
 
 ### Communication
 
-For example, "No matter what question I ask you, we’ll never be able to know if we’re having the same experience of red", which is a reasonably good description of ineffability, is *really hard* to express and prove.
+It's hard to express ideas about the limitations of communication between agents. For example, "No matter what question I ask you, we’ll never be able to know if we’re having the same experience of red", which is a reasonably good description of ineffability, is *really hard* to express and prove.
 
 Here’s what’s hard about it:
 
@@ -205,23 +192,41 @@ Instead of expressing it properly, I’ve been expressing things like "Humans do
 
 ### Intuitions/fuzzy logic/probabilistic reasoning
 
-- Not able to explain how some things are more intuitive than others
-- Not able to say that you believe one thing by default, but could be convinced to believe another.
+Using first order logic, it's not very easy to express the fuzziness of beliefs. A lot of our intuitions about consciousness feel fuzzy and unclear.
 
+In FOL, we're not able to express the idea that some beliefs are more intuitive than others. We're not able to say that you believe one thing by default, but could be convinced to believe another. For example, I think that the typical human experience of the inverted spectrum thought experiment is that you've never thought about inverted spectrum before and you'd casually assumed that everyone else sees colors the same way as you do, but then someone explains the thought experiment to you and you realize that actually your beliefs *are* consistent with it. This kind of belief-by-default which is defeatable by explicit argument is not compatible with first order logic.
 
+Logicians have developed a host of logical systems that try to add the ability to express concepts that humans find intuitively meaningful and that FOL isn't able to represent. I'm personally quite skeptical of using the resulting logical systems as a tool to get closer to human decision-making abilities, because I think that human logical reasoning is actually a super complicated set of potentially flawed heuristics on top of something like probabilistic reasoning, and so I don't think that trying to extend FOL itself is likely to yield anything that mirrors human reasoning in a particular deep or trustworthy way. However, it's plausible that some of these logics might be useful tools for doing the kind of shallow modelling that I'm doing in this project. Here are some plausibly relevant ones:
+
+- [Default logic](https://en.wikipedia.org/wiki/Default_logic) extends FOL to be able to handle statements like "birds usually fly"--it will assume by default that a given bird can fly until it has evidence to the contrary. 
+- [Fuzzy logic](https://en.wikipedia.org/wiki/Fuzzy_logic) allows truth values to be real numbers between 0 and 1, to allow for predicates like "tall" which can be more or less true.
 
 ### Unable to implement one-off reasoning
 
-eg Armstrong is hard, I think? Becayse ut
+In first order logic, I can't directly express claims about the deductive processes that an agent uses.
+
+For example, Armstrong (1968) discusses the illusion of a headless woman:
+
+> To produce this illusion, a woman is placed on a suitably illuminated stage with a dark background and a black cloth is placed over her head. It looks to the spectators as if she has no head. The spectators cannot see the woman's head. But they gain the impression that they can see that the woman has not got a head. (Cf. 'I looked inside, and saw that he was not there.') Unsophisticated spectators might conclude that the woman did not in fact have a head.
+> 
+> What the example shows is that, in certain cases, it is very natural for human beings to pass from something that is true: 'I do not perceive that X is Y', to something that may be false: 'I perceive that X is not Y'. We have here one of those unselfconscious and immediate movements of the mind of which Hume spoke, and which he thought to be so important in our mental life. 
+
+This is a claim about a deductive process that humans have--that in certain conditions, we go from "I don't percieve that X is Y" to "I percieve that X is not Y". To express this, we'd need to use a logic that had features of both default logic and modal logic.
+
+Another example is Gary Drescher's theories in "Good and Real". A lot of his ideas come from specific claims about how our mental algorithms work, and so they can't be expressed easily in FOL.
 
 ### Repetitiveness of the current strategy
 
 As it is, I'm implementing behaviors twice:
 
-- I have to make the agent behave a particular way
-- I have to make the agent believe that agents behave a particular way.
+- I have to make the agent behave a particular way, by writing code in Python in a variety of places in the agent.
+- I have to make the agent believe that agents behave a particular way, by writing logic in Z3 in the AgentReasoningSystem which describes that behavior.
 
-To some extent, humans have these beliefs in-built. But more so, we learn these concepts from our experience
+To go even further, I'd have to make the agent believe that agents believe that agents behave a particular way. This recursion could bottom out if I could introduce an axiom that was something like "For all beliefs B, if you believe B, you believe that you believe B". But this kind of axiom both isn't expressible without modal logic, and also isn't clearly true--humans have the capacity to be inconsistent about this kind of thing, and it seems plausible that this capacity for inconsistency might end up being relevant to our intuitions about consciousness.
+
+I think that human intuitions about consciousness arise from a combination of innate predispositions to particular theories and learning from introspection and talking to other people. This is closer to the Agent being created with very little content in its AgentReasoningSystem (and so very little introspective ability), and learning from observing its own behavior over time and putting the things it learned in its AgentReasoningSystem.
+
+I guess my real belief here is that we're born with predispositions to represent particular concepts in particular ways--we have "hardware accelleration" for thinking about the beliefs and desires of other humans so that we can succeed in social games--but these predispositions are more like foundations which we use learning to build on.
 
 ## Where could we go from here?
 

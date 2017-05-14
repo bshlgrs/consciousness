@@ -185,7 +185,6 @@ class AgentReasoningSystem:
           )
         ))
 
-        # define experience_of
         experience_of = Function('experience_of', Human, WorldFact, MaybeColorQuale)
         axioms.append(Z3Helper.for_all([Human, WorldFact], lambda a, wf:
           experience_of(a, wf) ==
