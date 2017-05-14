@@ -25,6 +25,8 @@ if __name__ == "__main__":
         )
     )
 
+
+
     print
     print "Q: For all two humans, do they see colors the same?"
     print agent.respond_to_question(
@@ -41,19 +43,20 @@ if __name__ == "__main__":
     agent.show_color(GREEN)
     agent.show_color(GREEN)
 
+
     print
-    print "Q: Are your memories at timestep 1 and 2 of the same color?"
+    print "Q: Are your memories at timestep 0 and 1 of the same color?"
     print agent.respond_to_question(
         ('logic_brief',
-            ("==", ("memory", "myself", 1), ("memory", "myself", 2))
+            ("==", ("memory", "myself", 0), ("memory", "myself", 1))
         )
     )
 
     print
-    print "Q: Are you seeing the same color now as you saw at timestep 2?"
+    print "Q: Are you seeing the same color now as you saw at timestep 0?"
     print agent.respond_to_question(
         ('logic_brief',
-            ("==", ("memory", "myself", 2), ("current_quale", "myself"))
+            ("==", ("memory", "myself", 1), ("current_quale", "myself"))
         )
     )
 

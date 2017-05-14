@@ -11,6 +11,43 @@ class AgentReasoningSystem:
         self.solver = Solver()
         self.solver.add(self.axioms())
 
+    def check_statement(self, statement):
+        result = {}
+
+        # self.solver = Solver()
+        # self.solver.add(self.axioms())
+        self.solver.push()
+
+        self.solver.add(self.bot.sense_axioms())
+
+        self.solver.push()
+        self.solver.add(Not(statement))
+        negation_satisfiability = self.solver.check()
+        if negation_satisfiability == sat:
+            result["negation_model"] = self.solver.model()
+
+        result["negation_satisfiability"] = negation_satisfiability
+
+        self.solver.pop()
+        self.solver.push()
+
+        self.solver.add(statement)
+
+        # print self.solver.to_smt2()
+
+        satisfiability = self.solver.check()
+        if satisfiability == sat:
+            result["model"] = self.solver.model()
+
+        result["satisfiability"] = satisfiability
+
+        self.solver.pop()
+
+        # pop off current state
+        self.solver.pop()
+
+        return result
+
 
     def build_z3_expr(self, expr, ctx = {}):
         try:
@@ -220,35 +257,3 @@ class AgentReasoningSystem:
 
         return axioms
 
-    def check_statement(self, statement):
-        result = {}
-
-        self.solver.push()
-
-        self.solver.add(self.bot.sense_axioms())
-
-        self.solver.push()
-        self.solver.add(Not(statement))
-        negation_satisfiability = self.solver.check()
-        if negation_satisfiability == sat:
-            result["negation_model"] = self.solver.model()
-
-        result["negation_satisfiability"] = negation_satisfiability
-
-        self.solver.pop()
-        self.solver.push()
-
-        self.solver.add(statement)
-
-        satisfiability = self.solver.check()
-        if satisfiability == sat:
-            result["model"] = self.solver.model()
-
-        result["satisfiability"] = satisfiability
-
-        self.solver.pop()
-
-        # pop off current state
-        self.solver.pop()
-
-        return result
