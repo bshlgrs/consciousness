@@ -2,25 +2,27 @@
 
 ## Introduction
 
-I wrote a program which implements the core features of several illusionist theories of consciousness. In this report, I'll explain how the program works and what it does.
-
+I wrote a program which implements the core features of two illusionist theories of consciousness. In this report, I'll explain how the program works and what it does.
 
 Note: I take an illusionist perspective, which might be kind of annoying. When I talk about "features of consciousness", I want to be agnostic between meaning "feature of conscious experience" in the traditional sense and "feature of our introspection of conscious experience" in the illusionist sense.
 
-
 ## Background
 
-In the course of writing his "Report on Consciousness and Moral Patienthood", Luke ran across a variety of theories of consciousness and says that he wishes that these theories "went further".
+In the course of writing his "Report on Consciousness and Moral Patienthood", Luke writes that he wishes theories of consciousness went further.
 
-link to #MoreSatisfying in the report
+> In all these cases, my concern [about several existing theories of consciousness] is not so much that they are wrong (though they may be), but instead that they don’t “go far enough.”
+> 
+> In fact, I think it’s plausible that several of these theories say something important about how various brain functions work, including brain functions that are critical to conscious experience (in humans, at least). Indeed, on my view, it is quite plausible the case that consciousness depends on integrated information and higher-order representations. And it would not surprise me if human consciousness also depends on prediction error minimization, recurrent processing, “multiple drafts,” and a global workspace. The problem is just that none of these ideas, or even all of these ideas combined, seem sufficient to explain, with a decent amount of precision, most of the key features of consciousness we know about.
 
-He also lamented that it’s really hard to tell exactly what someone means by their theories of consciousness--Luke writes things like (link to #Hero in the report)
+He also lamented that it’s really hard to tell exactly what someone means by their theories of consciousness--Luke writes things like
 
 > And yet, I don’t think this version of the Hero object is conscious, and I’d guess that Braithwaite would agree. But if this isn’t what Braithwaite means by "nociception," "mental representations," and so on, then what does she mean? What program would satisfy one or more of her indicators of consciousness?
 
 One part of the approach that Luke and I take is that different features of consciousness probably need to be dealt with separately. Qualia seem ineffable, private, and intrinsic. We are interested in trying to explain these intuitions separately if necessary, rather than looking for a single simple theory which explains all features of our conscious experience.
 
 This suggests that one good approach might be to approach various features of consciousness one at a time, and try to come up with an explanation for each particular feature individually.
+
+Two 
 
 ### What's our claimed connection between this program and real consciousness?
 
@@ -38,8 +40,6 @@ By "consciousness theory", I mean something like "an attempt at explaining some 
 The two theories implemented are a variation of Drescher's "qualia as gensyms" theory, and Kammerer's theoretical introspection hypothesis (TIH). Qualia as gensyms is intended to explain the ineffibility of qualia, and TIH attempts to explain why it is that it seems meaningless to say that our conscious experience is illusory.
 
 I have extended "qualia as gensyms" to handle situations of partial ineffibility like our experience of color.
-
-TODO: check that that's what partial ineffibility is.
 
 ## Example run of the program
 
@@ -90,9 +90,8 @@ When you ask it a question, here's what happens:
 - This interprets the question in terms of concepts the agent knows.
 - The verbal system then often calls the `check_statement` method of the AgentReasoningSystem, which does logical inference based on inputs to the reasoning system from other modules--in particular, from the Agent's `memory` and `current_hue` fields.
 
+
 ### Consciousness explananda
-
-
 
 #### Ineffibility and inverted spectra via modification of Drescher's "qualia as gensyms" theory
 
@@ -230,6 +229,6 @@ I think that human intuitions about consciousness arise from a combination of in
 
 I guess my real belief here is that we're born with predispositions to represent particular concepts in particular ways--we have "hardware accelleration" for thinking about the beliefs and desires of other humans so that we can succeed in social games--but these predispositions are more like foundations which we use learning to build on.
 
-## Where could we go from here?
+## Conclusions
 
--
+What have we learned?

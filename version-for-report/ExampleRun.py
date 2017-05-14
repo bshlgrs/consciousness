@@ -43,7 +43,6 @@ if __name__ == "__main__":
     agent.show_color(GREEN)
     agent.show_color(GREEN)
 
-
     print
     print "Q: Are your memories at timestep 0 and 1 of the same color?"
     print agent.respond_to_question(
