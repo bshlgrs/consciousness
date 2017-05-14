@@ -18,9 +18,9 @@ He also lamented that it’s really hard to tell exactly what someone means by t
 
 > And yet, I don’t think this version of the Hero object is conscious, and I’d guess that Braithwaite would agree. But if this isn’t what Braithwaite means by "nociception," "mental representations," and so on, then what does she mean? What program would satisfy one or more of her indicators of consciousness?
 
-One position that Luke and I take is that different features of consciousness probably need to be dealt with separately. Qualia seem ineffable, private, and intrinsic. We are interested in trying to explain these intuitions separately as necessary, rather than looking for a single simple theory which explains all features of our conscious experience.
+One part of the approach that Luke and I take is that different features of consciousness probably need to be dealt with separately. Qualia seem ineffable, private, and intrinsic. We are interested in trying to explain these intuitions separately if necessary, rather than looking for a single simple theory which explains all features of our conscious experience.
 
-This suggests that one good approach might be to approach various features of consciousness one at a time, and try to come up with an explanation for that particular feature.
+This suggests that one good approach might be to approach various features of consciousness one at a time, and try to come up with an explanation for each particular feature individually.
 
 ### What's our claimed connection between this program and real consciousness?
 
@@ -41,7 +41,7 @@ I have extended "qualia as gensyms" to handle situations of partial ineffibility
 
 TODO: check that that's what partial ineffibility is.
 
-## What it can do
+## Example run of the program
 
 Here's what you get if you run `ExampleRun.py`.
 
@@ -91,6 +91,8 @@ When you ask it a question, here's what happens:
 - The verbal system then often calls the `check_statement` method of the AgentReasoningSystem, which does logical inference based on inputs to the reasoning system from other modules--in particular, from the Agent's `memory` and `current_hue` fields.
 
 ### Consciousness explananda
+
+
 
 #### Ineffibility and inverted spectra via modification of Drescher's "qualia as gensyms" theory
 
