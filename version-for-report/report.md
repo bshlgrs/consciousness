@@ -11,7 +11,7 @@ Note: I take an illusionist perspective, which might be kind of annoying. When I
 In the course of writing his "Report on Consciousness and Moral Patienthood", Luke writes that he wishes theories of consciousness went further.
 
 > In all these cases, my concern [about several existing theories of consciousness] is not so much that they are wrong (though they may be), but instead that they don’t “go far enough.”
-> 
+>
 > In fact, I think it’s plausible that several of these theories say something important about how various brain functions work, including brain functions that are critical to conscious experience (in humans, at least). Indeed, on my view, it is quite plausible the case that consciousness depends on integrated information and higher-order representations. And it would not surprise me if human consciousness also depends on prediction error minimization, recurrent processing, “multiple drafts,” and a global workspace. The problem is just that none of these ideas, or even all of these ideas combined, seem sufficient to explain, with a decent amount of precision, most of the key features of consciousness we know about.
 
 He also lamented that it’s really hard to tell exactly what someone means by their theories of consciousness--Luke writes things like
@@ -21,8 +21,6 @@ He also lamented that it’s really hard to tell exactly what someone means by t
 One part of the approach that Luke and I take is that different features of consciousness probably need to be dealt with separately. Qualia seem ineffable, private, and intrinsic. We are interested in trying to explain these intuitions separately if necessary, rather than looking for a single simple theory which explains all features of our conscious experience.
 
 This suggests that one good approach might be to approach various features of consciousness one at a time, and try to come up with an explanation for each particular feature individually.
-
-Two 
 
 ### What's our claimed connection between this program and real consciousness?
 
@@ -114,7 +112,7 @@ For simplicity, in this agent we only have hue and no saturation or value.
 
 This is implemented in the code in the following ways:
 
-Vision is a function from (Human, Hue) to HueQuale. This implementation suggests that qualia are objective features of the world, so it's meaningful to compare the qualia of two humans, but that the relationship between an objective feature of the world and the subjective experience of it is agent-dependent. In this system, both Hue and HueQuale are represented as integers from 0 to 31, where addition is defined to "wrap around", so that eg 25 + 20 = 13 (because 13 + 32 = 45). This wrapping around behavior allows us to express the idea that we intuitively experience hue as a wheel rather than a spectrum. 
+Vision is a function from (Human, Hue) to HueQuale. This implementation suggests that qualia are objective features of the world, so it's meaningful to compare the qualia of two humans, but that the relationship between an objective feature of the world and the subjective experience of it is agent-dependent. In this system, both Hue and HueQuale are represented as integers from 0 to 31, where addition is defined to "wrap around", so that eg 25 + 20 = 13 (because 13 + 32 = 45). This wrapping around behavior allows us to express the idea that we intuitively experience hue as a wheel rather than a spectrum.
 
 Agents do not have access to the number which is representing their HueQualia. Instead, when they try to make judgements about their memories or their current experience, the AgentReasoningSystem calls the `sense_axioms` method of the main Agent object to get information on its current seen hue and its memories. This method returns something like
 
@@ -141,7 +139,7 @@ Kammerer's paper "The Hardest Aspect of the Illusion Problem — and How to Solv
 >
 > [...]
 >
-> Many proponents of illusionism, I think, would begin by saying that illusionist theories can already explain this intuitive resistance to illusionism in a rather natural way. They would draw a parallel with perceptual illusions. The illusion of phenomenality may arise because of some hardwired features of our introspective device, in such a way that this illusion has some degree of cognitive impenetrability (Frankish, this issue, p. 18). It persists even in the face of opposite beliefs. That could explain why, even if we are convinced illusionists, our intuition still pulls us away from illusionism. Similarly, in the Müller-Lyer illusion, we are still intuitively tempted to judge that the two lines have different lengths, even when we believe that they do not.
+> Many proponents of illusionism, I think, would begin by saying that illusionist theories can already explain this intuitive resistance to illusionism in a rather natural way. They would draw a parallel with perceptual illusions. The illusion of phenomenality may arise because of some hardwired features of our introspective device, in such a way that this illusion has some degree of cognitive impenetrability (Frankish, this issue, p. 18). It persists even in the face of opposite beliefs. That could explain why, even if we are convinced illusionists, our intuition still pulls us away from illusionism. Similarly, in the Müller-Lyer illusion, we are still intuitively tempted to judge that the two lines have different lengths, even when we believe that they do not.
 >
 > The problem, from my point of view, is that we cannot explain the hardest aspect of the illusion problem simply by following this model. Indeed, when facing a Gregundrum, we do not have any particular intuitive resistance to entertaining the hypothesis that the apparent presence of a solid Penrose triangle could merely be an illusion. On the contrary, this hypothesis seems perfectly intelligible and sensible — actually, this may be the most natural hypothesis that comes to mind when facing what seems to be an impossible object, such as a Penrose triangle. So, this model cannot explain the peculiarity of the illusion of phenomenality.
 
@@ -170,13 +168,13 @@ My translation looks like this:
         - WF is the ExperienceFact which describes A having an experience E, in which case the experience of this fact is E.
     - This is described in the code by having a function `experience_of` from an Agent and WorldFact to either a Quale or nothing.
 - In the world state WS, agent A has an illusion of a WorldFact WF if both of the following are true:
-    - The fact WF is not actually present in WS. (Gettier-style situations aside, you're not having an illusion of something if it's really there.) 
+    - The fact WF is not actually present in WS. (Gettier-style situations aside, you're not having an illusion of something if it's really there.)
     -  If experience_of(A, WF) is a quale Q, then WS contains the ExperienceFact corresponding to A experiencing Q.
         - This means that for Jeff to be having an illusion of the world being red, Jeff must be experiencing red.
 
 The result of this is that the agent thinks that it's concievable that one might have an illusion of the world being a particular color, and it's concievable that one might have an illusion of *someone else* seeing a particular color, but it's not logically possible to have an illusion of your own conscious experience.
 
-## Obstacles
+## Limitations to this approach
 
 There are a bunch of things that it would be nice if my agent could reason about, but which I think are very hard or impossible to express with Z3, the theorem prover I’m using, and I don’t know if they’re possible with any currently available theorem prover.
 
@@ -199,8 +197,11 @@ In FOL, we're not able to express the idea that some beliefs are more intuitive 
 
 Logicians have developed a host of logical systems that try to add the ability to express concepts that humans find intuitively meaningful and that FOL isn't able to represent. I'm personally quite skeptical of using the resulting logical systems as a tool to get closer to human decision-making abilities, because I think that human logical reasoning is actually a super complicated set of potentially flawed heuristics on top of something like probabilistic reasoning, and so I don't think that trying to extend FOL itself is likely to yield anything that mirrors human reasoning in a particular deep or trustworthy way. However, it's plausible that some of these logics might be useful tools for doing the kind of shallow modelling that I'm doing in this project. Here are some plausibly relevant ones:
 
-- [Default logic](https://en.wikipedia.org/wiki/Default_logic) extends FOL to be able to handle statements like "birds usually fly"--it will assume by default that a given bird can fly until it has evidence to the contrary. 
+- [Default logic](https://en.wikipedia.org/wiki/Default_logic) extends FOL to be able to handle statements like "birds usually fly"--it will assume by default that a given bird can fly until it has evidence to the contrary.
 - [Fuzzy logic](https://en.wikipedia.org/wiki/Fuzzy_logic) allows truth values to be real numbers between 0 and 1, to allow for predicates like "tall" which can be more or less true.
+- Someone has built [fuzzy default logic](http://www.emeraldinsight.com/doi/abs/10.1108/17563781111115769), so combining those is possible.
+
+It might actually be end up being easier to write a new own theorem prover than to use an off-the-shelf one for this problem. The theorem prover community is mostly interested in being able to solve problems where the difficulty is that you have an extremely large number of variables which are connected to each other in relatively simple ways. (SAT solvers are an extreme example of this.) For this project, we have relatively few variables and relatively complicated logical relationships between them, and we don't mind using algorithms that aren't guaranteed to terminate or return the right answer in hard cases. So a specialized theorem prover (perhaps based on a graph search over the space of possible proofs) might work better.
 
 ### Unable to implement one-off reasoning
 
@@ -209,12 +210,12 @@ In first order logic, I can't directly express claims about the deductive proces
 For example, Armstrong (1968) discusses the illusion of a headless woman:
 
 > To produce this illusion, a woman is placed on a suitably illuminated stage with a dark background and a black cloth is placed over her head. It looks to the spectators as if she has no head. The spectators cannot see the woman's head. But they gain the impression that they can see that the woman has not got a head. (Cf. 'I looked inside, and saw that he was not there.') Unsophisticated spectators might conclude that the woman did not in fact have a head.
-> 
-> What the example shows is that, in certain cases, it is very natural for human beings to pass from something that is true: 'I do not perceive that X is Y', to something that may be false: 'I perceive that X is not Y'. We have here one of those unselfconscious and immediate movements of the mind of which Hume spoke, and which he thought to be so important in our mental life. 
+>
+> What the example shows is that, in certain cases, it is very natural for human beings to pass from something that is true: 'I do not perceive that X is Y', to something that may be false: 'I perceive that X is not Y'. We have here one of those unselfconscious and immediate movements of the mind of which Hume spoke, and which he thought to be so important in our mental life.
 
 This is a claim about a deductive process that humans have--that in certain conditions, we go from "I don't percieve that X is Y" to "I percieve that X is not Y". To express this, we'd need to use a logic that had features of both default logic and modal logic.
 
-Another example is Gary Drescher's theories in "Good and Real". A lot of his ideas come from specific claims about how our mental algorithms work, and so they can't be expressed easily in FOL.
+Another example is Gary Drescher's theories in "Good and Real". A lot of his ideas come from specific claims about how our mental algorithms work, and so they can't be expressed easily in FOL. TODO: WRITE MORE HERE
 
 ### Repetitiveness of the current strategy
 
@@ -232,3 +233,4 @@ I guess my real belief here is that we're born with predispositions to represent
 ## Conclusions
 
 What have we learned?
+
