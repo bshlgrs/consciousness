@@ -112,7 +112,7 @@ It has the following classes:
 - AgentVerbalSystem
 - AgentReasoningSystem
 
-![IMAGE](quiver-image-url/E6117A4B440FCB0039E191ACCBA9BB3D.jpg =800x740)
+![IMAGE](./agent-diagram.svg)
 
 When it sees a hue, here's what happens: We call the `show_hue` method of Agent. This sets the agent's `current_hue` field to the hue. It also adds this hue to the end of the Agent's list of memories.
 
