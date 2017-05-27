@@ -114,7 +114,7 @@ It has the following classes:
 - AgentVerbalSystem
 - AgentReasoningSystem
 
-![IMAGE](./agent-diagram.svg)
+![IMAGE](https://raw.githubusercontent.com/bshlgrs/consciousness/master/version-for-report/agent-diagram.svg?token=ACkH8jXva_mMV1gSbjzCYfp8ZLtj5Bq0ks5ZMwE5wA%3D%3D)
 
 When its camera is shown a hue, here's what happens: We call the `show_hue` method of Agent. This sets the agent's `current_hue` field to the hue. It also adds this hue to the end of the Agent's list of memories.
 
