@@ -83,13 +83,13 @@ Both that statement and its negation are possible.
 Q: For all y, does there exist an x such that x = y + 1?
 Yes.
 
-Q: For all two humans, do they see colors the same? Should be 'idk'
-No.
+Q: For all two humans, do they see colors the same?
+Both that statement and its negation are possible.
 
-Q: Are your memories at timestep 1 and 2 of the same color?
-No.
+Q: Are your memories at timestep 0 and 1 of the same color?
+Yes.
 
-Q: Are you seeing the same color now as you saw at timestep 1?
+Q: Are you seeing the same color now as you saw at timestep 0?
 No.
 
 Q: Is it possible for an agent to have an illusion of red?
