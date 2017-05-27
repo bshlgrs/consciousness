@@ -104,6 +104,8 @@ No, that's impossible.
 
 ## How it works
 
+This program represents an agent which has a single-pixel camera attached and which can communicate with the outside world over a simple text channel which lets us ask it questions and lets it answer.
+
 The program is written in Python 2. It uses the theorem prover Z3.
 
 It has the following classes:
@@ -114,7 +116,7 @@ It has the following classes:
 
 ![IMAGE](./agent-diagram.svg)
 
-When it sees a hue, here's what happens: We call the `show_hue` method of Agent. This sets the agent's `current_hue` field to the hue. It also adds this hue to the end of the Agent's list of memories.
+When its camera is shown a hue, here's what happens: We call the `show_hue` method of Agent. This sets the agent's `current_hue` field to the hue. It also adds this hue to the end of the Agent's list of memories.
 
 When you ask it a question, here's what happens:
 
