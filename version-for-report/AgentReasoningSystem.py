@@ -10,12 +10,24 @@ class AgentReasoningSystem:
         set_param(proof=True)
         self.solver = Solver()
         self.solver.add(self.axioms())
+        self.solver.push()
+
+        # build a model, to be used when calling `evaluate`
+        self.solver.check()
+        self.model = self.solver.model()
+
+    def evaluate(self, expr, kind):
+        self.solver.push()
+        output = Const("output", kind)
+        self.solver.add(output == expr)
+        self.solver.check()
+        res = self.solver.model().evaluate(output)
+        self.solver.pop()
+        return res
 
     def check_statement(self, statement):
         result = {}
 
-        # self.solver = Solver()
-        # self.solver.add(self.axioms())
         self.solver.push()
 
         self.solver.add(self.bot.sense_axioms())
@@ -32,8 +44,6 @@ class AgentReasoningSystem:
         self.solver.push()
 
         self.solver.add(statement)
-
-        # print self.solver.to_smt2()
 
         satisfiability = self.solver.check()
         if satisfiability == sat:
@@ -133,8 +143,8 @@ class AgentReasoningSystem:
 
         self.concepts["Human"] = Human = DeclareSort('Human')
         self.concepts['myself'] = Const('myself', Human)
-        self.concepts["Color"] = Color = BitVecSort(5)
-        self.concepts["color_quale"] = ColorQuale = BitVecSort(5)
+        self.concepts["Color"] = Color = BitVecSort(8)
+        self.concepts["color_quale"] = ColorQuale = BitVecSort(8)
         self.concepts["state_of_affairs"] = StateOfAffairs = DeclareSort('StateOfAffairs')
 
         WorldFact = DeclareSort('WorldFact')

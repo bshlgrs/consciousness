@@ -6,13 +6,20 @@ GREEN = 0
 if __name__ == "__main__":
     agent = Agent()
 
+    print "Q: What's 2 + 2?"
+    print agent.respond_to_question(("evaluate", ("+", 2, 2), "int"))
+
+    print
     print "Q: Suppose there are two humans Bob and Jane, do they have the same qualia associated with every color?"
     print agent.respond_to_question(
         ("logic_brief",
             ("for_some", (("Human", "bob"), ("Human", "jane")),
-                ("for_all", (("Color", "c"),), ("==", ("vision", "bob", "c"), ("vision", "jane", "c")))
+                ("for_all", (("Color", "c"),),
+                 ("==", ("vision", "bob", "c"), ("vision", "jane", "c")))
         ))
     )
+
+
 
     print
     print "Q: For all y, does there exist an x such that x = y + 1?"

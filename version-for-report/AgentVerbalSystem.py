@@ -52,6 +52,10 @@ class AgentVerbalSystem:
                 names = [x[1] for x in question[1]]
                 return { str(x): self.reasoning_system.verbalize(model[x]) for x in model.decls() if str(x) in names }
 
+        elif question[0] == "evaluate":
+            return self.reasoning_system.evaluate(
+                self.reasoning_system.build_z3_expr(question[1]),
+                self.reasoning_system.build_z3_expr(question[2]))
         else:
             return "I don't know how to answer that"
 

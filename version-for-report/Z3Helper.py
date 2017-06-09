@@ -33,3 +33,7 @@ class Z3Helper:
         Maybe.declare('Just', ('maybe_value', sort))
         Maybe.declare('Nothing')
         return Maybe.create()
+
+    @staticmethod
+    def abs(x):
+        return If(x > 0, x, -x)
