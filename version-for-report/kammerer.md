@@ -16,7 +16,7 @@ He proposes tackling this problem by coming up with an explicit theory of what t
 > 4. Take all the cases in which a certain state of affairs A appears veridically to a subject S, and consider what all these cases have in common regarding the way in which S is affected. What they have in common is a state E, which is an experience of A. Something is a part of E if and only if this thing is part of the way in which S is affected in all the cases in which A appears veridically to a subject.
 > 5. Appearances can be fallacious, and a mind can be deceived by the way states of affairs appear. And here is what happens in cases of fallacious appearances: when a subject S has a fallacious appearance of A, S is affected in exactly the same way as in cases of veridical appearances of A, except that A is not the case. That is to say, when a subject S has a fallacious appearance of A, it is in state E (E being, and being nothing but, what is common to the way S is affected in all the cases in which A appears veridically to her), but A is not the case.
 
-We implement the five claims of the TIH  as beliefs in our agent’s reasoning system. This allows the agent to respond to questions like “Is it conceivable that an agent might have an illusion of having a red object in front of them?” with “yes”:
+We implement the five claims of the TIH as beliefs in our agent’s reasoning system. This allows the agent to respond to questions like “Is it conceivable that an agent might have an illusion of having a red object in front of them?” with “yes”:
 
 > (for-some (Agent a) (could-have-illusion-of agent (seeing-color red)))
 
@@ -26,7 +26,26 @@ But the agent concludes that it is not conceivable for an agent to have an illus
 
 In our code, the statements of the TIH hypothesis are implemented as logical claims in the agent’s reasoning module. (They’re in the `kammerer_axioms` method in `ReasoningModule.py` if you want to read them.)
 
-Our agent answers questions about logical possibilities by making calls to the Z3 theorem prover. Z3 is a library which does logical inference--given a set of axioms, it can tell you if another logical expression is entailed by them or not. It uses first order logic. Appendix A contains more information about how these beliefs were translated into first order logic.
+Our agent can parse and answer questions which require logical reasoning by using the Z3 theorem prover. Z3 is a software package which does logical inference--given a set of axioms, it can tell you whether another logical expression is entailed by them. It works with expressions in a logical system called "many-sorted logic", which is a variant on first order logic. In vanilla first-order logic, it would require complex and repetitive circumlocutions to describe facts like ‘A and B are instances of an Agent’, ‘red and yellow are instances of a color’, and ‘Agents are not colors’. Many-sorted logic is structured to make these distinctions straightforward.
+
+In our agent, vision is a function from Agent and Color to ColorQuale. In many-sorted logic, it is an error to make statements like "When red sees the color green, its experience is the color yellow", because red is not an Agent and yellow is not a ColorQuale. We say that Agent, Color, and ColorQuale are "sorts".
+
+Using Z3, we represent the reasoning processes of the agent by choosing the axioms which it passes to Z3 when answering questions. Axioms can be inbuilt beliefs of the agent, or facts about memories of the agent--both types of fact are treated the same by the theorem prover.
+
+In our code, the axioms are collected by the `axioms` method of the `AgentReasoningSystem` class. Some axioms are built in--for example, the agent will start with the belief that all agents experience differences between colors the same way--and some are generated dynamically. For example, facts like “at timestep 5 I saw a color the same as am currently seeing’’ are added as the agent has experiences.
+
+We implement a version of Kammerer's theoretical introspection hypothesis by inputting logical axioms used for judging statements about color experience, as well as defining several sorts which are used in these axioms. We define sorts to correspond to concepts from Kammerer's description of TIH:
+
+- It uses the sort `Agent` to represent what Kammerer calls "subjects"
+- Kammerer uses the phrase "state of affairs" to refer to ways that a world can be. We use the sort `WorldFact` to represent individual facts about how the world can be, and the sort `WorldState` to represent the conjunction of many `WorldFact`s.
+
+Using these sorts, we can translate the axioms Kammerer provides into first-order logic axioms that describe when it is that the experience of a `WorldState` is illusory. To make it easier to ask questions about the agent's definition of illusion, we also define a function `could-have-illusion-of` which takes a `WorldState` like "the color visible from the camera is red" and returns whether it is possible for an experience of that state to be illusory.
+
+There are some technical details involved in the translation of Kammerer's axioms to many-sorted logic, which we detail in Appendix A.
+
+The result of this is that the agent thinks that it is conceivable that one might have an illusion of the world being a particular color, and it is conceivable that one might have an illusion of *someone else* seeing a particular color, but it is not conceivable for an agent to have an illusion that it is having an experience. This is a desirable feature of our model because the intuition ‘what you are experiencing is not the sort of thing that can be illusory’ is what this set of axioms tries to capture.
+
+
 
 ## Appendix A: implementation of Theoretical Introspection Hypothesis
 
