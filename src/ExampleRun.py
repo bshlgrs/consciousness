@@ -10,10 +10,10 @@ if __name__ == "__main__":
     print agent.respond_to_question(("evaluate", ("+", 2, 2), "int"))
 
     print
-    print "Q: Suppose there are two humans Bob and Jane, do they have the same qualia associated with every color?"
+    print "Q: Suppose there are two agents Bob and Jane, do they have the same qualia associated with every color?"
     print agent.respond_to_question(
         ("logic_brief",
-            ("for_some", (("Human", "bob"), ("Human", "jane")),
+            ("for_some", (("Agent", "bob"), ("Agent", "jane")),
                 ("for_all", (("Color", "c"),),
                  ("==", ("vision", "bob", "c"), ("vision", "jane", "c")))
         ))
@@ -35,11 +35,11 @@ if __name__ == "__main__":
 
 
     print
-    print "Q: For all two humans, do they see colors the same?"
+    print "Q: For all two agents, do they see colors the same?"
     print agent.respond_to_question(
         ("logic_brief",
             ('for_all',
-                (("Human", "h1"), ("Human", "h2"), ("Color", "c")),
+                (("Agent", "h1"), ("Agent", "h2"), ("Color", "c")),
                 ("==", ("vision", "h1", "c"), ("vision", "h2", "c"))
             )
         )
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print agent.respond_to_question(
         ("is_it_possible",
             ('for_some',
-                [("Human", "buck"), ('WorldState', 's'), ("Color", 'c')],
+                [("Agent", "buck"), ('WorldState', 's'), ("Color", 'c')],
                 ("has_illusion",
                     "myself",
                     "s",
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     print agent.respond_to_question(
         ("is_it_possible",
             ('for_some',
-                [("Human", "buck"), ('WorldState', 's'), ("Color", 'c')],
+                [("Agent", "buck"), ('WorldState', 's'), ("Color", 'c')],
                 ("has_illusion",
                     "myself",
                     "s",
@@ -101,7 +101,7 @@ if __name__ == "__main__":
     print agent.respond_to_question(
         ("is_it_possible",
             ('for_some',
-                [("Human", "buck"), ('WorldState', 's'), ("Color", 'c')],
+                [("Agent", "buck"), ('WorldState', 's'), ("Color", 'c')],
                 ("has_illusion",
                     "buck",
                     "s",

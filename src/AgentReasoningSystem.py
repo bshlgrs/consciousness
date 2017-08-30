@@ -141,8 +141,8 @@ class AgentReasoningSystem:
     def axioms(self):
         axioms = []
 
-        self.concepts["Human"] = Human = DeclareSort('Human')
-        self.concepts['myself'] = Const('myself', Human)
+        self.concepts["Agent"] = Agent = DeclareSort('Agent')
+        self.concepts['myself'] = Const('myself', Agent)
         self.concepts["Color"] = Color = BitVecSort(8)
         self.concepts["color_quale"] = ColorQuale = BitVecSort(8)
         self.concepts["state_of_affairs"] = StateOfAffairs = DeclareSort('StateOfAffairs')
@@ -150,18 +150,17 @@ class AgentReasoningSystem:
         WorldFact = DeclareSort('WorldFact')
 
         self.concepts['memory'] = memory = \
-             Function("memory", Human, IntSort(), ColorQuale)
+             Function("memory", Agent, IntSort(), ColorQuale)
         self.concepts['current_quale'] = current_quale = \
-                Function("current_quale", Human, ColorQuale)
-
-
+                Function("current_quale", Agent, ColorQuale)
 
         self.concepts["vision"] = vision = \
-            Function("vision", Human, Color, ColorQuale)
+            Function("vision", Agent, Color, ColorQuale)
 
-        axioms.append(Z3Helper.for_all([Human, Human, Color, Color],
+        axioms.append(Z3Helper.for_all([Agent, Agent, Color, Color],
             lambda h1, h2, c1, c2:
-                vision(h1, c1) - vision(h1, c2) == vision(h2, c1) - vision(h2, c2)))
+                Z3Helper.abs(vision(h1, c1) - vision(h1, c2)) ==
+                    Z3Helper.abs(vision(h2, c1) - vision(h2, c2))))
 
         axioms.extend(self.theoretical_introspection_hypothesis_axioms())
         return axioms
@@ -189,7 +188,7 @@ class AgentReasoningSystem:
     def theoretical_introspection_hypothesis_axioms(self):
         axioms = []
         ColorQuale = self.concepts["color_quale"]
-        Human = self.concepts["Human"]
+        Agent = self.concepts["Agent"]
         Color = self.concepts["Color"]
 
         vision = self.concepts["vision"]
@@ -198,12 +197,12 @@ class AgentReasoningSystem:
         MaybeColorQuale = Z3Helper.build_maybe_sort(ColorQuale)
 
         WorldFact = Datatype('WorldFact')
-        WorldFact.declare('ExperienceFact', ('wf_human', Human), ('wf_quale', ColorQuale))
+        WorldFact.declare('ExperienceFact', ('wf_agent', Agent), ('wf_quale', ColorQuale))
         WorldFact.declare('WorldColorFact', ('wf_color', Color))
         WorldFact = WorldFact.create()
         self.concepts["ExperienceFact"] = ExperienceFact = WorldFact.ExperienceFact
         self.concepts["WorldColorFact"] = WorldColorFact = WorldFact.WorldColorFact
-        wf_human = WorldFact.wf_human
+        wf_agent = WorldFact.wf_agent
         wf_quale = WorldFact.wf_quale
         wf_color = WorldFact.wf_color
         is_ExperienceFact = WorldFact.is_ExperienceFact
@@ -217,7 +216,7 @@ class AgentReasoningSystem:
             If(is_ExperienceFact(wf1) != is_ExperienceFact(wf2),
               True,
               If(is_ExperienceFact(wf1),
-                Or(wf_quale(wf1) == wf_quale(wf2), wf_human(wf1) != wf_human(wf2)),
+                Or(wf_quale(wf1) == wf_quale(wf2), wf_agent(wf1) != wf_agent(wf2)),
                 wf1 == wf2
               )
             )
@@ -232,12 +231,12 @@ class AgentReasoningSystem:
           )
         ))
 
-        experience_of = Function('experience_of', Human, WorldFact, MaybeColorQuale)
-        axioms.append(Z3Helper.for_all([Human, WorldFact], lambda a, wf:
+        experience_of = Function('experience_of', Agent, WorldFact, MaybeColorQuale)
+        axioms.append(Z3Helper.for_all([Agent, WorldFact], lambda a, wf:
           experience_of(a, wf) ==
             If(is_WorldColorFact(wf),
               MaybeColorQuale.Just(vision(a, wf_color(wf))),
-              If(wf_human(wf) == a, MaybeColorQuale.Just(wf_quale(wf)), MaybeColorQuale.Nothing)
+              If(wf_agent(wf) == a, MaybeColorQuale.Just(wf_quale(wf)), MaybeColorQuale.Nothing)
           ))
         )
 
@@ -249,9 +248,9 @@ class AgentReasoningSystem:
           )
         ))
 
-        self.concepts['has_illusion'] = has_illusion = Function('has_illusion', Human, WorldState, WorldFact, BoolSort())
+        self.concepts['has_illusion'] = has_illusion = Function('has_illusion', Agent, WorldState, WorldFact, BoolSort())
         axioms.append(
-          Z3Helper.for_all([Human, WorldState, WorldFact], lambda a, ws, wf:
+          Z3Helper.for_all([Agent, WorldState, WorldFact], lambda a, ws, wf:
             has_illusion(a, ws, wf) == And(
               Not(state_contains_fact(ws, wf)),
               Implies(MaybeColorQuale.is_Just(experience_of(a, wf)),

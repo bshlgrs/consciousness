@@ -1,7 +1,7 @@
 from z3 import *
 from AgentReasoningSystem import AgentReasoningSystem
 from AgentVerbalSystem import AgentVerbalSystem
-
+from Z3Helper import Z3Helper
 
 class Agent:
     def __init__(self):
@@ -26,7 +26,8 @@ class Agent:
         current_color_axioms = [memory(myself, time) - current_quale(myself) == x - self.current_color
                   for (time, x) in enumerate(self.color_memory)]
 
-        memory_axioms = [memory(myself, x_time) - memory(myself, y_time) == x - y
+        memory_axioms = [
+            Z3Helper.abs(memory(myself, x_time) - memory(myself, y_time)) == abs(x - y)
                 for (x_time, x) in enumerate(self.color_memory)
                 for (y_time, y) in enumerate(self.color_memory)
                 if x_time < y_time]
