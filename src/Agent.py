@@ -3,18 +3,29 @@ from AgentReasoningSystem import AgentReasoningSystem
 from AgentVerbalSystem import AgentVerbalSystem
 from Z3Helper import Z3Helper
 
+
 class Agent:
+    """
+    This class represents the simulated agent.
+    """
     def __init__(self):
+        # This is an array containing hues which the agent has seen.
         self.color_memory = []
+
+        # This is the current color the agent is seeing.
         self.current_color = None
+
         self.reasoning_system = AgentReasoningSystem(self)
         self.verbal_system = AgentVerbalSystem(self.reasoning_system)
 
-        self.reasoning_system.add_lemmas()
-
+    # Public method to show a color to the agent.
     def show_color(self, color):
         self.color_memory.append(color)
         self.current_color = color
+
+    # Public method to show a color to the agent.
+    def ask_question(self, question):
+        return self.verbal_system.respond_to_question(question)
 
     def _sense_axioms(self):
         memory = self.reasoning_system.concepts["memory"]
@@ -33,7 +44,3 @@ class Agent:
                 if x_time < y_time]
 
         return (current_color_axioms + memory_axioms)
-
-
-    def respond_to_question(self, question):
-        return self.verbal_system.respond_to_question(question)

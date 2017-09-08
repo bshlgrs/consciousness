@@ -23,4 +23,4 @@ while question is not ":q":
         else:
             print "The only allowed action is :show and :q"
     elif question[0] == "(":
-        print agent.respond_to_question(parse_sexpr(question))
+        print agent.ask_question(parse_sexpr(question))

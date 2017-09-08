@@ -165,25 +165,6 @@ class AgentReasoningSystem:
         axioms.extend(self.theoretical_introspection_hypothesis_axioms())
         return axioms
 
-    def add_lemma(self, lemma):
-        res = self.check_statement(lemma)
-        print res
-        if res['negation_satisfiability'] == unsat:
-            if res['satisfiability'] == sat:
-                print "I guess that that lemma is true"
-                self.solver.add(lemma)
-            else:
-                print "I believe a contradiction"
-        else:
-            if res['satisfiability'] == sat:
-                print "That lemma is not provable"
-            else:
-                print "That lemma is provably false"
-
-    def add_lemmas(self):
-        # TODO: maybe do this
-        pass
-
 
     def theoretical_introspection_hypothesis_axioms(self):
         axioms = []
