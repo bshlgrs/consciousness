@@ -190,6 +190,10 @@ class AgentReasoningSystem:
 
         Implementing this in the agent was quite complicated and finicky, because Z3 isn't very
         good at expressing this kind of idea.
+
+        The overall goal here is to define a function `has_illusion` which our agent can use
+        to eventually come to the conclusion that it's inconcievable that someone could have
+        a mistaken judgement about their own conscious experience.
         """
 
         # start out by making an empty list to put axioms into, and loading
@@ -216,7 +220,8 @@ class AgentReasoningSystem:
         # This is kind of ugly--I'm building a manual notion of truth *inside*
         # the theorem prover.
 
-        # TODO
+        # I have to do this because Z3 isn't able to reason on an appropriately
+        # meta level about the relationships between facts. TODO: more detail here.
 
         # We start out by defining the sort WorldFact.
         WorldFact = Datatype('WorldFact')
@@ -281,6 +286,17 @@ class AgentReasoningSystem:
           )
         ))
 
+        # Another easy, boding one: We define the function `fact_consistent_with_world`,
+        # which says that a fact is consistent with a world if it's consistent with
+        # all the facts contained in the world.
+        fact_consistent_with_world = Function('fact_consistent_with_world', WorldFact, WorldState, BoolSort())
+        axioms.append(Z3Helper.for_all([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
+          Implies(
+            And(fact_consistent_with_world(wf1, ws), state_contains_fact(ws, wf2)),
+            consistent_facts(wf1, wf2)
+          )
+        ))
+
         # We define a function `experience_of` which takes an Agent and a WorldFact
         # and returns the experience of the Agent associated with fact being true.
 
@@ -305,30 +321,55 @@ class AgentReasoningSystem:
           ))
         )
 
+        # Congratulations, you've almost made it all the way through! We're up
+        # to the last definition, which is the function `has_illusion`.
 
-        fact_consistent_with_world = Function('fact_consistent_with_world', WorldFact, WorldState, BoolSort())
-        axioms.append(Z3Helper.for_all([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
-          Implies(
-            And(fact_consistent_with_world(wf1, ws), state_contains_fact(ws, wf2)),
-            consistent_facts(wf1, wf2)
-          )
-        ))
+        # `has_illusion` takes an agent, a WorldState, and a WorldFact, and
+        # returns whether, in that state, the agent has an illusion of that
+        # WorldFact.
+
+        # Here's a prototypical example of the logic represented by `has_illusion`:
+        # if the room is not on fire, and I think the room is on fire, then I am
+        # having an illusion that the room is on fire.
+
+        # This is an illusion because I'm having the experience associated with
+        # that world fact being true, but it's not true.
+
+        # So for an agent to be having an illusion of a WorldFact in a WorldState,
+        # the agent needs to have the experience associated with that WorldFact
+        # but that WorldFact must not be true.
+
+        # And a final requirement is that the world has to be consistent. So if
+        # the WorldFact in question is a WorldFact that has an inherent experience
+        # for the Agent, then the agent must be having that experience, otherwise
+        # the WorldState doesn't make sense and can't be considered an example of
+        # an illusion.
 
         self.concepts['has_illusion'] = has_illusion = Function('has_illusion', Agent, WorldState, WorldFact, BoolSort())
         axioms.append(
           Z3Helper.for_all([Agent, WorldState, WorldFact], lambda a, ws, wf:
-            has_illusion(a, ws, wf) == And(
-              Not(state_contains_fact(ws, wf)),
-              Implies(MaybeColorQuale.is_Just(experience_of(a, wf)),
-                And(
-                  current_quale(a) == MaybeColorQuale.maybe_value(experience_of(a, wf)),
-                  state_contains_fact(ws,
-                    ExperienceFact(a, MaybeColorQuale.maybe_value(experience_of(a, wf)))),
+            has_illusion(a, ws, wf) == # agent a is having an illusion of WorldFact wf in WorldState ws if:
+              And( # all of the following must be true:
+                Not(state_contains_fact(ws, wf)), # the fact isn't true
+
+                # and if there is an experience associated with the world fact being true:
+                Implies(MaybeColorQuale.is_Just(experience_of(a, wf)),
+                  And(
+                    # then the agent must be experiencing that quale
+                    current_quale(a) == MaybeColorQuale.maybe_value(experience_of(a, wf)),
+
+                    # and the worldstate must contain the fact that the agent is experiencing
+                    # that quale.
+                    state_contains_fact(ws,
+                      ExperienceFact(a, MaybeColorQuale.maybe_value(experience_of(a, wf)))),
+                  )
                 )
-              )
             )
           )
         )
+
+        # All of this leads to this agent thinking that it's impossible for
+        # agents to have mistaken judgements about their own experiences.
 
         return axioms
 
