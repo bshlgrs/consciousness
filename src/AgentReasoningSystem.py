@@ -167,19 +167,68 @@ class AgentReasoningSystem:
 
 
     def _theoretical_introspection_hypothesis_axioms(self):
+        """
+        This method contains the logic which implements Kammerer's theoretical
+        introspection hypothesis (TIH).
+
+        Frankish (2006) summarizes the TIH thusly:
+
+        > [According to Kammerer's theory,] introspection is informed by an innate and modular
+        > theory of mind and epistemology, which states that (a) we acquire perceptual information
+        > via mental states - experiences - whose properties determine how the world appears to us,
+        > and (b) experiences can be fallacious, a fallacious experience of A being one in which
+        > we are mentally affected in the same way as when we have a veridical experience of A,
+        > except that A is not present.
+
+        > Given this theory, Kammerer notes, it is incoherent to suppose that we could have a
+        > fallacious experience [i.e. an illusory experience] of an experience, E. For that
+        > would involve being mentally affected in the same way as when we have a veridical
+        > experience of E, without E being present. But when we are having a veridical experience
+        > of E, we are having E (otherwise the experience wouldn't be veridical). So, if we are
+        > mentally affected in the same way as when we are having a veridical experience of E,
+        > then we are having E. So E is both present and not present, which is contradictory...
+
+        Implementing this in the agent was quite complicated and finicky, because Z3 isn't very
+        good at expressing this kind of idea.
+        """
+
+        # start out by making an empty list to put axioms into, and loading
+        # preexisting concepts
         axioms = []
         ColorQuale = self.concepts["color_quale"]
         Agent = self.concepts["Agent"]
         Color = self.concepts["Color"]
-
         vision = self.concepts["vision"]
         current_quale = self.concepts["current_quale"]
 
+        # The sort MaybeColorQuale represents either a ColorQuale or a special
+        # null value.
         MaybeColorQuale = Z3Helper.build_maybe_sort(ColorQuale)
 
+        # One particularly unsatisfying aspect of how I had to implement it is
+        # the treatment of facts about the world. In this code I've defined a
+        # sort called "WorldFact" for facts about the world, a sort called
+        # "WorldState" for a set of all facts that are true about the world in a
+        # given situation, and later we define a predicate called
+        # `fact_consistent_with_world`, which takes a WorldFact and a WorldState
+        # and returns whether the WorldFact is consisten with that WorldState.
+
+        # This is kind of ugly--I'm building a manual notion of truth *inside*
+        # the theorem prover.
+
+        # TODO
+
+        # We start out by defining the sort WorldFact.
         WorldFact = Datatype('WorldFact')
+
+        # THere are two types of WorldFact:
+        # the fact that an agent is experiencing a particular quale
         WorldFact.declare('ExperienceFact', ('wf_agent', Agent), ('wf_quale', ColorQuale))
+        # and the fact that the world is a particular color.
         WorldFact.declare('WorldColorFact', ('wf_color', Color))
+
+        # Now we do the boring plumbing work to finalize the data type and save
+        # some things as concepts.
         WorldFact = WorldFact.create()
         self.concepts["ExperienceFact"] = ExperienceFact = WorldFact.ExperienceFact
         self.concepts["WorldColorFact"] = WorldColorFact = WorldFact.WorldColorFact
@@ -189,37 +238,73 @@ class AgentReasoningSystem:
         is_ExperienceFact = WorldFact.is_ExperienceFact
         is_WorldColorFact = WorldFact.is_WorldColorFact
 
+        # We also define a sort WorldState for a set of all facts that are true
+        # about the world.
         self.concepts['WorldState'] = WorldState = DeclareSort('WorldState')
 
+        # Not all WorldFacts are consistent with each other. For example,
+        # "Bob is currently experiencing the feeling of seeing red" and "Bob
+        # is currently experiencing the feeling of seeing blue" are contradictory.
+        # The function consistent_facts takes two world facts and returns
+        # whether they are contradictory.
         consistent_facts = Function('consistent_facts', WorldFact, WorldFact, BoolSort())
         axioms.append(Z3Helper.for_all([WorldFact, WorldFact], lambda wf1, wf2:
+          # Two WorldFacts are consistent if:
           consistent_facts(wf1, wf2) ==
             If(is_ExperienceFact(wf1) != is_ExperienceFact(wf2),
+              # If one is an ExperienceFact and the other is a WorldColorFact,
+              # they're automatically consistent.
               True,
               If(is_ExperienceFact(wf1),
+
+                # If they're both ExperienceFacts, then they're consistent if
+                # they're either the same or they're facts about different agents.
                 Or(wf_quale(wf1) == wf_quale(wf2), wf_agent(wf1) != wf_agent(wf2)),
+
+                # If they're both WorldColorFacts, they're only consistent if
+                # they're equal.
                 wf1 == wf2
               )
             )
         ))
 
+        # Define a function that describes a WorldFact is one of the facts contained
+        # in a WorldState.
         state_contains_fact = Function('state_contains_fact', WorldState, WorldFact, BoolSort())
 
-        # defining consistency
+        # We require world states to only contain facts which are consistent with each other.
+        # So we assert that if wf1 and wf2 are facts both contained in the same world state,
+        # they need to be consistent.
         axioms.append(Z3Helper.for_all([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
           Implies(And(state_contains_fact(ws, wf1), state_contains_fact(ws, wf2)),
             consistent_facts(wf1, wf2)
           )
         ))
 
+        # We define a function `experience_of` which takes an Agent and a WorldFact
+        # and returns the experience of the Agent associated with fact being true.
+
+        # It returns a MaybeColorFact because there might not be an experience
+        # for an agent associated with the fact being true.
         experience_of = Function('experience_of', Agent, WorldFact, MaybeColorQuale)
         axioms.append(Z3Helper.for_all([Agent, WorldFact], lambda a, wf:
           experience_of(a, wf) ==
             If(is_WorldColorFact(wf),
+              # The experience of a WorldColorFact is the experience of seeing
+              # that color.
               MaybeColorQuale.Just(vision(a, wf_color(wf))),
-              If(wf_agent(wf) == a, MaybeColorQuale.Just(wf_quale(wf)), MaybeColorQuale.Nothing)
+
+
+              If(wf_agent(wf) == a,
+                # For the agent a, the experience of "Agent a is having the experience
+                # of quale q" is q.
+                MaybeColorQuale.Just(wf_quale(wf)),
+                # There is no inherent experience associated with some other agent
+                # having a particular experience.
+                MaybeColorQuale.Nothing)
           ))
         )
+
 
         fact_consistent_with_world = Function('fact_consistent_with_world', WorldFact, WorldState, BoolSort())
         axioms.append(Z3Helper.for_all([WorldState, WorldFact, WorldFact], lambda ws, wf1, wf2:
