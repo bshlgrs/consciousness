@@ -10,6 +10,9 @@ class AgentReasoningSystem:
     You might find it easier to understand this code if you first read the glossary
     of first-order logic terms in the README.
 
+    The most interesting code here is probably in the _axioms and
+    _theoretical_introspection_hypothesis_axioms methods.
+
     """
     def __init__(self, agent):
         self.concepts = {}
@@ -100,110 +103,65 @@ class AgentReasoningSystem:
 
         return result
 
-
-    def build_z3_expr(self, expr, ctx = {}):
-        try:
-            return self._try_build_z3_expr(expr, ctx)
-        except z3types.Z3Exception as e:
-            print expr, "failed to build. Types:"
-
-            for frag in expr:
-                try:
-                    blah = self._try_build_z3_expr(frag, ctx)
-                    print frag, blah, blah.sort()
-                except Exception as f:
-                    pass
-            raise Exception()
-        except Exception as e:
-            raise e
-
-    def _try_build_z3_expr(self, expr, ctx = {}):
-        if isinstance(expr, int):
-            return expr
-        elif isinstance(expr, basestring):
-            if expr in ctx:
-                return ctx[expr]
-            elif expr in self.concepts:
-                return self.concepts[expr]
-            else:
-                raise Exception("Concept %s is not known"%expr)
-        elif expr[0] == "for_all" or expr[0] == 'exists':
-            _, types_sexpr, claim_sexpr = expr
-
-            types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
-            claim = self.build_z3_expr(claim_sexpr, dict([str(obj), obj] for obj in types, **ctx))
-
-            klass = { 'for_all': ForAll, 'exists': Exists }[expr[0]]
-            return klass(types, claim)
-        elif expr[0] == "let":
-            _, decls_and_definitions, body = expr
-            ## This line is terrible code, but I'm leaving it in because Python
-            # programmers are officially okay with it. I'm using zip with a splat
-            # for unzipping. Sadface.
-            decls, definition_sexprs = zip(*((x[:2], x[2]) for x in decls_and_definitions))
-
-            return self.build_z3_expr(
-                ("for_all",
-                    decls,
-                    ("implies",
-                        tuple(["and"] + list(definition_sexprs)),
-                        body)
-                ),
-                ctx
-            )
-
-        elif expr[0] == "for_some":
-            _, types_sexpr, claim_sexpr = expr
-            for (type_obj, _) in types_sexpr:
-                if type_obj not in self.concepts:
-                    raise Exception("Error building for_some. Type %s was referred to but is not known."%type_obj)
-
-            try:
-                types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
-            except Exception as e:
-                raise Exception("error building for_some. Types needs to be an array of 2_tuples, it is %s. Error: %s"%(str(types_sexpr), str(e)))
-
-            claim = self.build_z3_expr(claim_sexpr, dict([str(obj), obj] for obj in types))
-            return claim
-        elif expr[0] == "==":
-            return self.build_z3_expr(expr[1], ctx) == self.build_z3_expr(expr[2], ctx)
-        elif expr[0] == "!=":
-            return self.build_z3_expr(expr[1], ctx) != self.build_z3_expr(expr[2], ctx)
-        else:
-            return self.concepts[expr[0]](*[self.build_z3_expr(x, ctx) for x in expr[1:]])
-
-    def _build_concepts(self):
-        self.concepts["and"] = And
-        self.concepts["or"] = Or
-        self.concepts["*"] = lambda x, y: x * y
-        self.concepts["+"] = lambda x, y: x + y
-        self.concepts["implies"] = Implies
-        self.concepts["int"] = IntSort()
-
     def _axioms(self):
+        """
+        This method creates the axioms which are built into the agent.
+
+        All of the agent's judgements are caused by the contents of this method.
+        As a result, it's probably the most important function to read for a
+        casual reader.
+
+        """
         axioms = []
 
+        # Start out by initializing some useful sorts.
+
+        # Make a sort for agents
         self.concepts["Agent"] = Agent = DeclareSort('Agent')
+        # "Myself" refers to a particular agent.
         self.concepts['myself'] = Const('myself', Agent)
+
+        # Define both colors and color qualia to be sorts represented as numbers
+        # between 0 and 255.
+
+        # The agent has separate concepts for Color, which is a physical color
+        # in the real world, and ColorQuale, which is the experience of a
+        # given color.
         self.concepts["Color"] = Color = BitVecSort(8)
         self.concepts["color_quale"] = ColorQuale = BitVecSort(8)
-        self.concepts["state_of_affairs"] = StateOfAffairs = DeclareSort('StateOfAffairs')
 
-        WorldFact = DeclareSort('WorldFact')
-
+        # The agent thinks that memory is a function from an agent and a timestep
+        # to the ColorQuale that that agent was experiencing at that timestep.
+        # Note that this definition of memory means that the agent thinks that
+        # memories are references to experiences rather than objective facts
+        # about the world.
         self.concepts['memory'] = memory = \
              Function("memory", Agent, IntSort(), ColorQuale)
+
+        # "current_quale" is a function from agents to their current color experience.
         self.concepts['current_quale'] = current_quale = \
                 Function("current_quale", Agent, ColorQuale)
 
+        # Vision is a function from agent and color to color quale.
+        # This definition leads to intuitions that different agents might have
+        # different experiences of the same color.
         self.concepts["vision"] = vision = \
             Function("vision", Agent, Color, ColorQuale)
 
+        # Different agents have different experiences of color, but the agent
+        # knows that all agents experience the differences between colors the
+        # same way. This axiom asserts this.
         axioms.append(Z3Helper.for_all([Agent, Agent, Color, Color],
             lambda h1, h2, c1, c2:
+                # For all humans h1 and h2, the difference between h1's experiences
+                # of c1 and c2 is the same as the difference between h2's
+                # experiences of those two colors.
                 Z3Helper.abs(vision(h1, c1) - vision(h1, c2)) ==
                     Z3Helper.abs(vision(h2, c1) - vision(h2, c2))))
 
+        # We also add a bunch more axioms related to Kammerer's theoretical
+        # introspection hypothesis. Because those axioms are quite complicated,
+        # I've separated them out into another method.
         axioms.extend(self._theoretical_introspection_hypothesis_axioms())
         return axioms
 
@@ -289,6 +247,11 @@ class AgentReasoningSystem:
 
         return axioms
 
+
+    # I don't think the code below this point is very interesting to people who are reading
+    # this code casually.
+
+
     def evaluate(self, expr, kind):
         """
         This allows us to ask the agent to evaluate some logical expression. For example,
@@ -301,3 +264,104 @@ class AgentReasoningSystem:
         res = self.solver.model().evaluate(output)
         self.solver.pop()
         return res
+
+
+    def build_z3_expr(self, expr, ctx = {}):
+        """
+        This method takes an proposition expressed as a series of nested tuples,
+        like this:
+
+            ("for_some", (("Agent", "bob"), ("Agent", "jane")),
+                ("for_all", (("Color", "c"),),
+                 ("==", ("vision", "bob", "c"), ("vision", "jane", "c")))
+            )
+
+        and translates it into an expression that can be fed into Z3.
+
+        This function mostly is an error-catching wrapper around
+        _try_build_z3_expr.
+        """
+        try:
+            return self._try_build_z3_expr(expr, ctx)
+        except z3types.Z3Exception as e:
+            print expr, "failed to build. Types:"
+
+            for frag in expr:
+                try:
+                    blah = self._try_build_z3_expr(frag, ctx)
+                    print frag, blah, blah.sort()
+                except Exception as f:
+                    pass
+            raise Exception()
+        except Exception as e:
+            raise e
+
+
+    def _try_build_z3_expr(self, expr, ctx = {}):
+        """
+        This method contains the nuts and bolts for translating Python tuples
+        into Z3 expressions.
+        """
+        if isinstance(expr, int):
+            return expr
+        elif isinstance(expr, basestring):
+            if expr in ctx:
+                return ctx[expr]
+            elif expr in self.concepts:
+                return self.concepts[expr]
+            else:
+                raise Exception("Concept %s is not known"%expr)
+        elif expr[0] == "for_all" or expr[0] == 'exists':
+            _, types_sexpr, claim_sexpr = expr
+
+            types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
+            claim = self.build_z3_expr(claim_sexpr, dict([str(obj), obj] for obj in types, **ctx))
+
+            klass = { 'for_all': ForAll, 'exists': Exists }[expr[0]]
+            return klass(types, claim)
+        elif expr[0] == "let":
+            _, decls_and_definitions, body = expr
+
+            decls, definition_sexprs = zip(*((x[:2], x[2]) for x in decls_and_definitions))
+
+            return self.build_z3_expr(
+                ("for_all",
+                    decls,
+                    ("implies",
+                        tuple(["and"] + list(definition_sexprs)),
+                        body)
+                ),
+                ctx
+            )
+
+        elif expr[0] == "for_some":
+            _, types_sexpr, claim_sexpr = expr
+            for (type_obj, _) in types_sexpr:
+                if type_obj not in self.concepts:
+                    raise Exception("Error building for_some. Type %s was referred to but is not known."%type_obj)
+
+            try:
+                types = [Const(name, self.concepts[type_obj]) for (type_obj, name) in types_sexpr]
+            except Exception as e:
+                raise Exception("error building for_some. Types needs to be an array of 2_tuples, it is %s. Error: %s"%(str(types_sexpr), str(e)))
+
+            claim = self.build_z3_expr(claim_sexpr, dict([str(obj), obj] for obj in types))
+            return claim
+        elif expr[0] == "==":
+            return self.build_z3_expr(expr[1], ctx) == self.build_z3_expr(expr[2], ctx)
+        elif expr[0] == "!=":
+            return self.build_z3_expr(expr[1], ctx) != self.build_z3_expr(expr[2], ctx)
+        else:
+            return self.concepts[expr[0]](*[self.build_z3_expr(x, ctx) for x in expr[1:]])
+
+    def _build_concepts(self):
+        """
+        Builds a few basic concepts.
+        """
+        self.concepts["and"] = And
+        self.concepts["or"] = Or
+        self.concepts["*"] = lambda x, y: x * y
+        self.concepts["+"] = lambda x, y: x + y
+        self.concepts["implies"] = Implies
+        self.concepts["int"] = IntSort()
+

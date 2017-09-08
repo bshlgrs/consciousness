@@ -41,3 +41,11 @@ The agent itself is defined in in the files `Agent.py`, `AgentVerbalSystem.py`, 
 
 - In `Agent.py`, we define the `Agent` class as well as the methods `show_color` and `respond_to_question`, which are the two methods through which we interact with the agent.
 - In `AgentVerbalSystem.py`
+
+### Useful vocabulary for reading this code
+
+- *Proposition*.
+- *Satisfiable*.
+- *Valid*.
+- *Model*.
+- *Sort*.
