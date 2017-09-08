@@ -1,5 +1,10 @@
 from Agent import Agent
 
+"""
+This is an example set of interactions with the agent. Through this interaction,
+we see several of the agent's judgements about consciousness.
+"""
+
 RED = 10
 GREEN = 0
 

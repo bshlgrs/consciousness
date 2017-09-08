@@ -2,6 +2,16 @@ from Agent import Agent
 from SexprParser import parse_sexpr
 import readline
 
+"""
+You can run this program if you want to interact with the agent over text.
+
+It's actually really painful to interact with the agent this way, so I recommend
+against using this. You'll have a better time if you interact with it through code,
+like in `ExampleRun.py`.
+
+"""
+
+
 question = None
 agent = Agent()
 

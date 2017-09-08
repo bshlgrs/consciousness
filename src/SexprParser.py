@@ -1,3 +1,5 @@
+# Helper methods to parse Lisp-like expressions.
+
 def parse_sexpr(sexpr_str):
     return recursive_descent(tokenize(sexpr_str))[0][0]
 

@@ -1,49 +1,91 @@
 from z3 import *
 from Z3Helper import Z3Helper
 
-class AgentReasoningSystem:
-    def __init__(self, bot):
-        self.concepts = {}
-        self.bot = bot
-        self.build_concepts()
 
+class AgentReasoningSystem:
+    """
+    This class contains the logic used by the agent to come up with its answers
+    to questions.
+
+    You might find it easier to understand this code if you first read the glossary
+    of first-order logic terms in the README.
+
+    """
+    def __init__(self, agent):
+        self.concepts = {}
+        self.agent = agent
+
+        # define some concepts that we want to be able to refer to, like
+        # addition or multiplication
+        self._build_concepts()
+
+        # tell Z3 that I'm going to be wanting to see the proofs it constructs,
+        # so it should incur the computational cost of doing proofs in such a
+        # way that it can 'show me its work'
         set_param(proof=True)
+
+        # Instantiate a Z3 solver, give it all our built-in axioms.
+        # It's called a solver rather than a prover because it works by solving
+        # a satisfiability problem. It is the object which does the theorem
+        # proving.
         self.solver = Solver()
-        self.solver.add(self.axioms())
+        self.solver.add(self._axioms())
+
+        # Calling `push` gives us a checkpoint that we can fall back to later,
+        # when we want to reset the agent to believing only what it believed
+        # initially.
         self.solver.push()
 
-        # build a model, to be used when calling `evaluate`
+        # When we ask questions of the the "evaluate" type, we want the agent
+        # to answer them without particularly doing new reasoning. So here we
+        # get the solver to create a model (which is a side effect of the `check`)
+        # method, and then we save that model to an instance variable.
         self.solver.check()
         self.model = self.solver.model()
 
-    def evaluate(self, expr, kind):
-        self.solver.push()
-        output = Const("output", kind)
-        self.solver.add(output == expr)
-        self.solver.check()
-        res = self.solver.model().evaluate(output)
-        self.solver.pop()
-        return res
+    def check_proposition(self, proposition):
+        """
+        This method takes a logical proposition, and then determines which of it
+        and its negation are true (the answer can be neither or both as well as
+        either one)
+        """
 
-    def check_statement(self, statement):
+        # initialize a dictionary to put all of the output in
         result = {}
 
+        # make a checkpoint, so that we can revert to the previous state of the
+        # solver later
         self.solver.push()
 
-        self.solver.add(self.bot._sense_axioms())
+        # Add all of the current sensory input to the list of axioms that the
+        # agent is currently using
+        self.solver.add(self.agent._sense_axioms())
+
+        # First, we're going to check whether the proposition could be false.
+        # To do this, we assert the negation of the proposition, then we check
+        # for a contradiction.
 
         self.solver.push()
-        self.solver.add(Not(statement))
+        # To check whether a proposition is consistent with our other axioms, we
+        # add it to the axioms of the solver, then we ask the solver to check
+        # whether it alls its axioms are still consistent.
+        self.solver.add(Not(proposition))
         negation_satisfiability = self.solver.check()
+
+        # If there was no contradiction found, then we save the model.
         if negation_satisfiability == sat:
             result["negation_model"] = self.solver.model()
 
+        # save to output whether the negation was satisfiable.
         result["negation_satisfiability"] = negation_satisfiability
 
+        # Reset to the checkpoint before we added the negation of our proposition.
         self.solver.pop()
+        # Create another checkpoint.
         self.solver.push()
 
-        self.solver.add(statement)
+        # Add our proposition, not negated this time.
+        self.solver.add(proposition)
 
         satisfiability = self.solver.check()
         if satisfiability == sat:
@@ -51,9 +93,9 @@ class AgentReasoningSystem:
 
         result["satisfiability"] = satisfiability
 
+        # Reset to before we added the proposition
         self.solver.pop()
-
-        # pop off current state
+        # Reset to before we added the sense axioms
         self.solver.pop()
 
         return result
@@ -61,13 +103,13 @@ class AgentReasoningSystem:
 
     def build_z3_expr(self, expr, ctx = {}):
         try:
-            return self.try_build_z3_expr(expr, ctx)
+            return self._try_build_z3_expr(expr, ctx)
         except z3types.Z3Exception as e:
             print expr, "failed to build. Types:"
 
             for frag in expr:
                 try:
-                    blah = self.try_build_z3_expr(frag, ctx)
+                    blah = self._try_build_z3_expr(frag, ctx)
                     print frag, blah, blah.sort()
                 except Exception as f:
                     pass
@@ -75,7 +117,7 @@ class AgentReasoningSystem:
         except Exception as e:
             raise e
 
-    def try_build_z3_expr(self, expr, ctx = {}):
+    def _try_build_z3_expr(self, expr, ctx = {}):
         if isinstance(expr, int):
             return expr
         elif isinstance(expr, basestring):
@@ -130,7 +172,7 @@ class AgentReasoningSystem:
         else:
             return self.concepts[expr[0]](*[self.build_z3_expr(x, ctx) for x in expr[1:]])
 
-    def build_concepts(self):
+    def _build_concepts(self):
         self.concepts["and"] = And
         self.concepts["or"] = Or
         self.concepts["*"] = lambda x, y: x * y
@@ -138,7 +180,7 @@ class AgentReasoningSystem:
         self.concepts["implies"] = Implies
         self.concepts["int"] = IntSort()
 
-    def axioms(self):
+    def _axioms(self):
         axioms = []
 
         self.concepts["Agent"] = Agent = DeclareSort('Agent')
@@ -162,11 +204,11 @@ class AgentReasoningSystem:
                 Z3Helper.abs(vision(h1, c1) - vision(h1, c2)) ==
                     Z3Helper.abs(vision(h2, c1) - vision(h2, c2))))
 
-        axioms.extend(self.theoretical_introspection_hypothesis_axioms())
+        axioms.extend(self._theoretical_introspection_hypothesis_axioms())
         return axioms
 
 
-    def theoretical_introspection_hypothesis_axioms(self):
+    def _theoretical_introspection_hypothesis_axioms(self):
         axioms = []
         ColorQuale = self.concepts["color_quale"]
         Agent = self.concepts["Agent"]
@@ -247,3 +289,15 @@ class AgentReasoningSystem:
 
         return axioms
 
+    def evaluate(self, expr, kind):
+        """
+        This allows us to ask the agent to evaluate some logical expression. For example,
+        we could ask the agent to evaluate 2 + 2, or its own age.
+        """
+        self.solver.push()
+        output = Const("output", kind)
+        self.solver.add(output == expr)
+        self.solver.check()
+        res = self.solver.model().evaluate(output)
+        self.solver.pop()
+        return res

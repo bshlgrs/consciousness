@@ -22,12 +22,12 @@ class AgentVerbalSystem:
         if question[0] == "logic":
             # The agent takes a proposition, evaluates, and prints out all of the
             # output of its reasoning system. This one is mostly used for debugging.
-            return self.reasoning_system.check_statement(
+            return self.reasoning_system.check_proposition(
                 self.reasoning_system.build_z3_expr(question[1])
             )
         elif question[0] == "logic_brief":
             # The agent takes a proposition, and checks its satisfiability:
-            res = self.reasoning_system.check_statement(
+            res = self.reasoning_system.check_proposition(
                 self.reasoning_system.build_z3_expr(question[1])
             )
 
@@ -60,7 +60,7 @@ class AgentVerbalSystem:
             # sentences to correspond to the question "Is this proposition possible" instead
             # of "Is this proposition true". This makes the usage of this code slightly
             # more intuitive.
-            res = self.reasoning_system.check_statement(
+            res = self.reasoning_system.check_proposition(
                 self.reasoning_system.build_z3_expr(question[1])
             )
 
@@ -86,7 +86,7 @@ class AgentVerbalSystem:
             # models in which the proposition is true. So producing models under which a
             # particular proposition is true is very closely related to its normal
             # functionality.
-            res = self.reasoning_system.check_statement(
+            res = self.reasoning_system.check_proposition(
                self.reasoning_system.build_z3_expr(('for_some', question[1], question[2]))
             )
 
