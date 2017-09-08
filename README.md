@@ -34,3 +34,10 @@ If you run `src/ExampleRun.py`, you'll get this output:
     No, that's impossible.
 
 The easiest way to play around with the code is to edit that file.
+
+## How to read this code
+
+The agent itself is defined in in the files `Agent.py`, `AgentVerbalSystem.py`, and `AgentReasoningSystem.py`.
+
+- In `Agent.py`, we define the `Agent` class as well as the methods `show_color` and `respond_to_question`, which are the two methods through which we interact with the agent.
+- In `AgentVerbalSystem.py`

@@ -30,7 +30,7 @@ class AgentReasoningSystem:
 
         self.solver.push()
 
-        self.solver.add(self.bot.sense_axioms())
+        self.solver.add(self.bot._sense_axioms())
 
         self.solver.push()
         self.solver.add(Not(statement))

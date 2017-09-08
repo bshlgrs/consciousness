@@ -16,7 +16,7 @@ class Agent:
         self.color_memory.append(color)
         self.current_color = color
 
-    def sense_axioms(self):
+    def _sense_axioms(self):
         memory = self.reasoning_system.concepts["memory"]
         myself = self.reasoning_system.concepts["myself"]
         current_quale = self.reasoning_system.concepts["current_quale"]
