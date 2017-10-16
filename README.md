@@ -2,7 +2,7 @@
 
 This repo contains the code that I (Buck Shlegeris) wrote for the Open Philanthropy Project as part of their investigations into moral patienthood.
 
-TODO: You can read the report HERE.
+You can read the report on this project [here](https://www.openphilanthropy.org/software-agent-illustrating-some-features-illusionist-account-consciousness).
 
 If you run `src/ExampleRun.py`, you'll get this output:
 
